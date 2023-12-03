@@ -11,13 +11,13 @@
 pub mod error;
 pub use error::Error;
 
+/// Multisig implementation
+pub mod ms;
+pub use ms::{Builder, EncodedMultisig, Multisig};
+
 /// Serde serialization
 #[cfg(feature = "serde")]
 pub mod serde;
-
-/// Varsig type and functions
-pub mod vs;
-pub use vs::{Builder, EncodedVarsig, Varsig};
 
 /// ...and in the darkness bind them
 pub mod prelude {

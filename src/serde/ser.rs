@@ -1,38 +1,42 @@
-use crate::{vs::SIGIL, Varsig};
-use multiutil::{CodecInfo, EncodedVaruint, Varbytes, Varuint};
+use crate::{ms::SIGIL, Multisig};
+use multiutil::{
+    BaseEncoded, CodecInfo, EncodedVarbytes, EncodedVaruint, EncodingInfo, Varbytes, Varuint,
+};
 use serde::ser::{self, SerializeStruct};
 
-/// Serialize instance of [`crate::Varsig`]
-impl ser::Serialize for Varsig {
+/// Serialize instance of [`crate::Multisig`]
+impl ser::Serialize for Multisig {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
         if serializer.is_human_readable() {
-            let cv: Vec<EncodedVaruint<u64>> = self
-                .attributes()
+            let attributes: Vec<EncodedVaruint<u64>> = self
+                .attributes
                 .iter()
-                .map(|v| Varuint::<u64>::encoded_new(*v))
+                .map(|v| BaseEncoded::new_base(self.encoding(), Varuint(*v)))
                 .collect();
-            let mut ss = serializer.serialize_struct("Varsig", 5)?;
-            ss.serialize_field("version", &self.version())?;
-            ss.serialize_field("codec", &self.codec().code())?;
-            ss.serialize_field("encoding", &self.msg_encoding().code())?;
-            ss.serialize_field("attributes", &cv)?;
-            ss.serialize_field("signature", &Varbytes::encoded_new(self.signature()))?;
+            let message = BaseEncoded::new_base(self.encoding(), Varbytes(self.message.clone()));
+            let payloads: Vec<EncodedVarbytes> = self
+                .payloads
+                .iter()
+                .map(|p| BaseEncoded::new_base(self.encoding(), Varbytes(p.clone())))
+                .collect();
+
+            let mut ss = serializer.serialize_struct("Multisig", 5)?;
+            ss.serialize_field("codec", &self.codec())?;
+            ss.serialize_field("attributes", &attributes)?;
+            ss.serialize_field("message", &message)?;
+            ss.serialize_field("signature", &payloads)?;
             ss.end()
         } else {
-            let cv: Vec<Varuint<u64>> = self.attributes().iter().map(|v| Varuint(*v)).collect();
-            let sig = Varbytes(self.signature());
-            (
-                SIGIL,
-                Varuint(self.version()),
-                self.codec(),
-                self.msg_encoding(),
-                cv,
-                sig,
-            )
-                .serialize(serializer)
+            let attributes: Vec<Varuint<u64>> =
+                self.attributes.iter().map(|v| Varuint(*v)).collect();
+            let message = Varbytes(self.message.clone());
+            let payloads: Vec<Varbytes> =
+                self.payloads.iter().map(|p| Varbytes(p.clone())).collect();
+
+            (SIGIL, self.codec(), attributes, message, payloads).serialize(serializer)
         }
     }
 }

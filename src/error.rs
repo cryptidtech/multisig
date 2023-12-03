@@ -20,15 +20,19 @@ pub enum Error {
     #[error(transparent)]
     Multiutil(#[from] multiutil::Error),
 
-    /// Missing sigil 0x34
-    #[error("Missing Varsig codec sigil")]
+    /// Missing sigil 0x39
+    #[error("Missing Multisig sigil")]
     MissingSigil,
 
-    /// Invalid version
-    #[error("Invalid Varsig version {0}")]
-    InvalidVersion(u8),
+    /// Missing signature data
+    #[error("Missing signature data")]
+    MissingSignature,
 
     /// Unsupported signature algorithm
     #[error("Unsupported signature algorithm: {0}")]
     UnsupportedAlgorithm(String),
+
+    /// Failed Varsig conversion
+    #[error("Failed Varsig conversion: {0}")]
+    FailedConversion(String),
 }

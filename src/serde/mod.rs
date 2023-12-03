@@ -4,32 +4,39 @@ mod ser;
 
 #[cfg(test)]
 mod tests {
-    use crate::{Builder, Varsig};
+    use crate::{Builder, Multisig};
     use multibase::Base;
     use multicodec::Codec;
     use serde_test::{assert_tokens, Configure, Token};
 
     #[test]
     fn test_serde_compact() {
-        let vs = Builder::newv2(Codec::Ed25519Pub)
+        let ms = Builder::new(Codec::Ed25519Pub)
             .with_signature_bytes([0u8; 64].as_slice())
-            .build();
+            .try_build()
+            .unwrap();
 
         assert_tokens(
-            &vs.compact(),
+            &ms.compact(),
             &[
-                Token::Tuple { len: 6 },
-                Token::BorrowedBytes(&[0x34]),
-                Token::BorrowedBytes(&[0x02]),
+                Token::Tuple { len: 5 },
+                // sigil
+                Token::BorrowedBytes(&[57]),
+                // codec
                 Token::BorrowedBytes(&[237, 1]),
-                Token::BorrowedBytes(&[0]),
+                // attributes
                 Token::Seq { len: Some(0) },
                 Token::SeqEnd,
+                // message
+                Token::BorrowedBytes(&[0]),
+                // payloads
+                Token::Seq { len: Some(1) },
                 Token::BorrowedBytes(&[
                     64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 ]),
+                Token::SeqEnd,
                 Token::TupleEnd,
             ],
         )
@@ -37,42 +44,44 @@ mod tests {
 
     #[test]
     fn test_serde_encoded_string() {
-        let vs = Builder::newv2(Codec::Ed25519Pub)
+        let ms = Builder::new(Codec::Ed25519Pub)
             .with_signature_bytes([0u8; 64].as_slice())
-            .with_encoding(Base::Base58Btc)
-            .build_encoded();
+            .with_base_encoding(Base::Base58Btc)
+            .try_build_encoded()
+            .unwrap();
 
         assert_tokens(
-            &vs.readable(),
-            &[Token::BorrowedStr("z8TWhueaumkaxd2Y4Yq66qx6zg3LrpnUWuLTR5XDf1URY3hQea39FmZsrbKqUXVCq6Z1rvh23YDHhMmGCGPpPEANjw3NczLf")
+            &ms.readable(),
+            &[Token::BorrowedStr("zBR4cW4F484u4oWF14RfLwccFJNxKRfZK6uHuvC2iSXVXzqHufan1HRdv8Q47cEqFdxiHoUtMTdpWB9Yss41LXzPgaE2KjAtX")
             ],
         )
     }
 
     #[test]
     fn test_serde_readable() {
-        let vs = Builder::newv2(Codec::Ed25519Pub)
+        let ms = Builder::new(Codec::Ed25519Pub)
             .with_signature_bytes([0u8; 64].as_slice())
-            .build();
+            .try_build()
+            .unwrap();
 
         assert_tokens(
-            &vs.readable(),
+            &ms.readable(),
             &[
                 Token::Struct {
-                    name: "Varsig",
+                    name: "Multisig",
                     len: 5,
                 },
-                Token::BorrowedStr("version"),
-                Token::U8(2_u8),
                 Token::BorrowedStr("codec"),
-                Token::U64(237_u64),
-                Token::BorrowedStr("encoding"),
-                Token::U64(0_u64),
+                Token::BorrowedStr("ed25519-pub"),
                 Token::BorrowedStr("attributes"),
                 Token::Seq { len: Some(0) },
                 Token::SeqEnd,
+                Token::BorrowedStr("message"),
+                Token::BorrowedStr("f00"),
                 Token::BorrowedStr("signature"),
+                Token::Seq { len: Some(1) },
                 Token::BorrowedStr("f4000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+                Token::SeqEnd,
                 Token::StructEnd,
             ],
         )
@@ -80,35 +89,37 @@ mod tests {
 
     #[test]
     fn test_serde_json() {
-        let vs1 = Builder::newv2(Codec::Ed25519Pub)
+        let ms1 = Builder::new(Codec::Ed25519Pub)
             .with_signature_bytes([0u8; 64].as_slice())
-            .build();
-        let s = serde_json::to_string(&vs1).unwrap();
-        let vs2: Varsig = serde_json::from_str(&s).unwrap();
-        assert_eq!(vs1, vs2);
+            .try_build()
+            .unwrap();
+        let s = serde_json::to_string(&ms1).unwrap();
+        let ms2: Multisig = serde_json::from_str(&s).unwrap();
+        assert_eq!(ms1, ms2);
     }
 
     #[test]
     fn test_serde_cbor() {
-        let vs1 = Builder::newv2(Codec::Ed25519Pub)
+        let ms1 = Builder::new(Codec::Ed25519Pub)
             .with_signature_bytes([0u8; 64].as_slice())
-            .build();
-        let v = serde_cbor::to_vec(&vs1).unwrap();
-        let vs2: Varsig = serde_cbor::from_slice(v.as_slice()).unwrap();
-        assert_eq!(vs1, vs2);
+            .try_build()
+            .unwrap();
+        let v = serde_cbor::to_vec(&ms1).unwrap();
+        let ms2: Multisig = serde_cbor::from_slice(v.as_slice()).unwrap();
+        assert_eq!(ms1, ms2);
     }
 
     #[test]
     fn test_eip191_unknown() {
         // this builds a Varsig::Unknown since we don't know about EIP-191
         // encoded data that is hashed with Keccak256 and signed with secp256k1
-        let vs1 = Builder::newv1(Codec::Secp256K1Pub)
-            .with_msg_encoding(Codec::Eip191)
-            .with_attributes(&[Codec::Keccak256.code()].to_vec())
+        let ms1 = Builder::new(Codec::Secp256K1Pub)
+            .with_attributes(&[Codec::Eip191.code(), Codec::Keccak256.code()].to_vec())
             .with_signature_bytes([0u8; 64].as_slice())
-            .build();
-        let s = serde_json::to_string(&vs1).unwrap();
-        let vs2: Varsig = serde_json::from_str(&s).unwrap();
-        assert_eq!(vs1, vs2);
+            .try_build()
+            .unwrap();
+        let s = serde_json::to_string(&ms1).unwrap();
+        let ms2: Multisig = serde_json::from_str(&s).unwrap();
+        assert_eq!(ms1, ms2);
     }
 }
