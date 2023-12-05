@@ -14,13 +14,13 @@ impl ser::Serialize for Multisig {
             let attributes: Vec<EncodedVaruint<u64>> = self
                 .attributes
                 .iter()
-                .map(|v| BaseEncoded::new_base(self.encoding(), Varuint(*v)))
+                .map(|v| BaseEncoded::new(self.encoding(), Varuint(*v)))
                 .collect();
-            let message = BaseEncoded::new_base(self.encoding(), Varbytes(self.message.clone()));
+            let message = BaseEncoded::new(self.encoding(), Varbytes(self.message.clone()));
             let payloads: Vec<EncodedVarbytes> = self
                 .payloads
                 .iter()
-                .map(|p| BaseEncoded::new_base(self.encoding(), Varbytes(p.clone())))
+                .map(|p| BaseEncoded::new(self.encoding(), Varbytes(p.clone())))
                 .collect();
 
             let mut ss = serializer.serialize_struct("Multisig", 5)?;

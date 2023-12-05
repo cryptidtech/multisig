@@ -1,6 +1,6 @@
 [package]
 name = "multisig"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Dave Huseby <dwh@linuxprogrammer.org>"]
 description = "Multisig self-describing multicodec implementation for digital signatures"
@@ -15,7 +15,7 @@ default = ["serde"]
 multibase = "0.9"
 multicodec = { version = "0.3", git = "https://github.com/cryptidtech/rust-multicodec.git" }
 multitrait = { version = "0.1", git = "https://github.com/cryptidtech/multitrait.git" }
-multiutil = { version = "0.1", git = "https://github.com/cryptidtech/multiutil.git" }
+multiutil = { version = "0.2", git = "https://github.com/cryptidtech/multiutil.git" }
 serde = { version = "1.0", default-featurs = false, features = ["alloc", "derive"], optional = true }
 ssh-key = { version = "0.6.2", features = ["crypto", "ed25519"]}
 thiserror = "1.0"

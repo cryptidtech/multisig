@@ -215,7 +215,7 @@ impl Builder {
 
     /// build a base encoded varsig
     pub fn try_build_encoded(&self) -> Result<EncodedMultisig, Error> {
-        Ok(BaseEncoded::new_base(
+        Ok(BaseEncoded::new(
             self.base_encoding
                 .unwrap_or_else(|| Multisig::preferred_encoding()),
             self.try_build()?,
@@ -259,10 +259,6 @@ mod tests {
         let s = ms1.to_string();
         let ms2 = EncodedMultisig::try_from(s.as_str()).unwrap();
         assert_eq!(ms1, ms2);
-
-        let msa = ms1.clone().to_inner();
-        let msb = ms2.clone().to_inner();
-        assert_eq!(msa, msb);
     }
 
     #[test]

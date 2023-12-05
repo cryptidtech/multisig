@@ -49,10 +49,10 @@ multisig    signature specific         signature payloads
 sigil           attributes
 
 
-<attributes> ::= <varuint> N(<varuints>)
+<attributes> ::= <varuint> N(<varuint>)
                      ^           ^
                     /             \
-            count of               variable number
+            count of               variable number of
     attribute values               attribute values
 
 
@@ -62,7 +62,7 @@ sigil           attributes
 <signature-payloads> ::= <varuint> N(<varbytes>)
                              ^           ^
                             /             \
-                    count of               variable number
+                    count of               variable number of
           signature payloads               signature payloads
 
 
@@ -73,7 +73,7 @@ sigil           attributes
             octets            of octets
 ```
 
-The Multikey format allows tools that don't recognize the key codec to at least
+The Multisig format allows tools that don't recognize the key codec to at least
 know how many octets are in the Multisig data so that it can skip over it. This
 format is also designed to support any kind of digital signature, even 
 signatures with multiple signature payloads such as threshold signatures. This

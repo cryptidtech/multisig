@@ -58,11 +58,8 @@ impl<'de> Deserialize<'de> for Multisig {
                                 return Err(Error::duplicate_field("attributes"));
                             }
                             let attr: Vec<EncodedVaruint<u64>> = map.next_value()?;
-                            attributes = Some(
-                                attr.iter()
-                                    .map(|a| a.clone().to_inner().to_inner())
-                                    .collect(),
-                            );
+                            attributes =
+                                Some(attr.iter().map(|a| (*a).clone().to_inner()).collect());
                         }
                         Field::Message => {
                             if message.is_some() {
@@ -76,11 +73,7 @@ impl<'de> Deserialize<'de> for Multisig {
                                 return Err(Error::duplicate_field("signature"));
                             }
                             let pls: Vec<EncodedVarbytes> = map.next_value()?;
-                            payloads = Some(
-                                pls.iter()
-                                    .map(|p| p.clone().to_inner().to_inner())
-                                    .collect(),
-                            );
+                            payloads = Some(pls.iter().map(|p| (*p).clone().to_inner()).collect());
                         }
                     }
                 }
