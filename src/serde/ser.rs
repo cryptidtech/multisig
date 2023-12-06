@@ -16,7 +16,7 @@ impl ser::Serialize for Multisig {
                 .iter()
                 .map(|v| BaseEncoded::new(self.encoding(), Varuint(*v)))
                 .collect();
-            let message = BaseEncoded::new(self.encoding(), Varbytes(self.message.clone()));
+            let message = Varbytes::encoded_new(self.encoding(), self.message.clone());
             let payloads: Vec<EncodedVarbytes> = self
                 .payloads
                 .iter()
