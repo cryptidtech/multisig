@@ -1,11 +1,31 @@
-use crate::{ms::SIGIL, Multisig};
+use crate::{
+    ms::{self, Attributes},
+    AttrId, Multisig,
+};
 use core::fmt;
 use multicodec::Codec;
-use multiutil::{EncodedVarbytes, EncodedVaruint, Varbytes, Varuint};
+use multiutil::{EncodedVarbytes, Varbytes};
 use serde::{
     de::{Error, MapAccess, Visitor},
     Deserialize, Deserializer,
 };
+
+/// Deserialize instance of [`crate::AttrId`]
+impl<'de> Deserialize<'de> for AttrId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            let s: &str = Deserialize::deserialize(deserializer)?;
+            Ok(AttrId::try_from(s).map_err(|e| Error::custom(e.to_string()))?)
+        } else {
+            let id: Varbytes = Deserialize::deserialize(deserializer)?;
+            Ok(AttrId::try_from(id.to_inner().as_slice())
+                .map_err(|e| Error::custom(e.to_string()))?)
+        }
+    }
+}
 
 /// Deserialize instance of [`crate::Multisig`]
 impl<'de> Deserialize<'de> for Multisig {
@@ -13,15 +33,14 @@ impl<'de> Deserialize<'de> for Multisig {
     where
         D: Deserializer<'de>,
     {
-        const FIELDS: &'static [&'static str] = &["codec", "attributes", "message", "signature"];
+        const FIELDS: &'static [&'static str] = &["codec", "message", "attributes"];
 
         #[derive(Deserialize)]
         #[serde(field_identifier, rename_all = "lowercase")]
         enum Field {
             Codec,
-            Attributes,
             Message,
-            Signature,
+            Attributes,
         }
 
         struct MultisigVisitor;
@@ -29,8 +48,8 @@ impl<'de> Deserialize<'de> for Multisig {
         impl<'de> Visitor<'de> for MultisigVisitor {
             type Value = Multisig;
 
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "struct Multisig")
+            fn expecting(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt.write_str("struct Multisig")
             }
 
             fn visit_map<V>(self, mut map: V) -> Result<Self::Value, V::Error>
@@ -38,81 +57,82 @@ impl<'de> Deserialize<'de> for Multisig {
                 V: MapAccess<'de>,
             {
                 let mut codec = None;
-                let mut attributes = None;
                 let mut message = None;
-                let mut payloads = None;
+                let mut attributes = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Codec => {
                             if codec.is_some() {
                                 return Err(Error::duplicate_field("codec"));
                             }
-                            let s: &str = map.next_value()?;
-                            codec = Some(
-                                Codec::try_from(s)
-                                    .map_err(|_| Error::custom("invalid Multisig codec"))?,
-                            );
-                        }
-                        Field::Attributes => {
-                            if attributes.is_some() {
-                                return Err(Error::duplicate_field("attributes"));
-                            }
-                            let attr: Vec<EncodedVaruint<u64>> = map.next_value()?;
-                            attributes =
-                                Some(attr.iter().map(|a| (*a).clone().to_inner()).collect());
+                            let c: Codec = map.next_value()?;
+                            codec = Some(c);
                         }
                         Field::Message => {
                             if message.is_some() {
                                 return Err(Error::duplicate_field("message"));
                             }
-                            let msg: EncodedVarbytes = map.next_value()?;
-                            message = Some(msg.to_inner().to_inner());
+                            let m: EncodedVarbytes = map.next_value()?;
+                            message = Some(m.to_inner().to_inner());
                         }
-                        Field::Signature => {
-                            if payloads.is_some() {
-                                return Err(Error::duplicate_field("signature"));
+                        Field::Attributes => {
+                            if attributes.is_some() {
+                                return Err(Error::duplicate_field("attributes"));
                             }
-                            let pls: Vec<EncodedVarbytes> = map.next_value()?;
-                            payloads = Some(pls.iter().map(|p| (*p).clone().to_inner()).collect());
+                            let attr: Vec<(AttrId, EncodedVarbytes)> = map.next_value()?;
+                            let mut a = Attributes::new();
+                            attr.iter()
+                                .try_for_each(|(id, attr)| -> Result<(), V::Error> {
+                                    let i = *id;
+                                    let v: Vec<u8> = (**attr).clone().to_inner();
+                                    if a.insert(i, v).is_some() {
+                                        return Err(Error::duplicate_field(
+                                            "duplicate attribute id",
+                                        ));
+                                    }
+                                    Ok(())
+                                })?;
+                            attributes = Some(a);
                         }
                     }
                 }
                 let codec = codec.ok_or_else(|| Error::missing_field("codec"))?;
-                let attributes = attributes.ok_or_else(|| Error::missing_field("attributes"))?;
                 let message = message.ok_or_else(|| Error::missing_field("message"))?;
-                let payloads = payloads.ok_or_else(|| Error::missing_field("signature"))?;
+                let attributes = attributes.ok_or_else(|| Error::missing_field("attributes"))?;
 
                 Ok(Self::Value {
                     codec,
-                    attributes,
                     message,
-                    payloads,
+                    attributes,
                 })
             }
         }
 
         if deserializer.is_human_readable() {
-            deserializer.deserialize_struct("Multisig", FIELDS, MultisigVisitor)
+            deserializer.deserialize_struct(ms::SIGIL.as_str(), FIELDS, MultisigVisitor)
         } else {
-            let (sigil, codec, attributes, message, payloads): (
-                Codec,
-                Codec,
-                Vec<Varuint<u64>>,
-                Varbytes,
-                Vec<Varbytes>,
-            ) = Deserialize::deserialize(deserializer)?;
-            if sigil != SIGIL {
+            let (sigil, codec, message, attr): (Codec, Codec, Varbytes, Vec<(AttrId, Varbytes)>) =
+                Deserialize::deserialize(deserializer)?;
+
+            if sigil != ms::SIGIL {
                 return Err(Error::custom("deserialized sigil is not a Multisig sigil"));
             }
-            let attributes = attributes.iter().map(|v| v.clone().to_inner()).collect();
             let message = message.to_inner();
-            let payloads = payloads.iter().map(|p| p.clone().to_inner()).collect();
+            let mut attributes = Attributes::new();
+            attr.iter()
+                .try_for_each(|(id, attr)| -> Result<(), D::Error> {
+                    let i = *id;
+                    let a: Vec<u8> = attr.clone().to_inner();
+                    if attributes.insert(i, a).is_some() {
+                        return Err(Error::duplicate_field("duplicate attribute id"));
+                    }
+                    Ok(())
+                })?;
 
             Ok(Self {
                 codec,
-                attributes,
                 message,
-                payloads,
+                attributes,
             })
         }
     }

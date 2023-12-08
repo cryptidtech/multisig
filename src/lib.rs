@@ -11,9 +11,17 @@
 pub mod error;
 pub use error::Error;
 
+/// Attribute Ids
+pub mod attrid;
+pub use attrid::AttrId;
+
 /// Multisig implementation
 pub mod ms;
 pub use ms::{Builder, EncodedMultisig, Multisig};
+
+/// Views on the multisig
+pub mod sig_views;
+pub use sig_views::{SigDataView, SigViews};
 
 /// Serde serialization
 #[cfg(feature = "serde")]

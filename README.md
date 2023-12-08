@@ -5,8 +5,9 @@ alread exists a multicodec format called Varsig but it has some serious
 deficiencies in design. Here is the Varsig
 ["spec"](https://github.com/ChainAgnostic/varsig).
 
-This implementation supports building Multisig objects by converting Varsig 
-signature but for now it is fairly limited.
+This implementation does have limited support for converting Varsig signatures
+into Multisig signatures. The level of support for conversion reflects my 
+estimation of how much Varsig has been adopted--which I think is very limited.
 
 This new Multisig implementation uses a new multicodec sigil `0x39` instead of 
 the Varsig `0x34` to distinguish the two formats.
@@ -38,32 +39,26 @@ number of octets (i.e. [`Varbytes`](https://github.com/cryptidtech/multiutil/blo
 ## Multisig Format 
 
 ```
-                       combined signature
-     key codec            message bytes
-         |                      |
-         v                      v
-0x39 <varuint> <attributes> <message> <signature-payloads>
-^                   ^                           ^
-|                   |                           |
-multisig    signature specific         signature payloads
-sigil           attributes
-
-
-<attributes> ::= <varuint> N(<varuint>)
-                     ^           ^
-                    /             \
-            count of               variable number of
-    attribute values               attribute values
-
+     key codec        signature attributes
+         |                     |
+         v                     v
+0x39 <varuint> <message> <attributes>
+^                  ^
+|                  |
+multisig    optional combined
+sigil       signature message
 
 <message> ::= <varbytes>
 
-
-<signature-payloads> ::= <varuint> N(<varbytes>)
-                             ^           ^
-                            /             \
-                    count of               variable number of
-          signature payloads               signature payloads
+                         variable number of attributes
+                                       |
+                            ______________________
+                           /                      \
+<attributes> ::= <varuint> N(<varuint>, <varbytes>)
+                     ^           ^          ^
+                    /           /           |
+            count of      attribute     attribute
+          attributes     identifier       value
 
 
 <varbytes> ::= <varuint> N(OCTET)
@@ -73,9 +68,9 @@ sigil           attributes
             octets            of octets
 ```
 
-The Multisig format allows tools that don't recognize the key codec to at least
-know how many octets are in the Multisig data so that it can skip over it. This
-format is also designed to support any kind of digital signature, even 
-signatures with multiple signature payloads such as threshold signatures. This
-also supports building combined signatures that contain the signed data in the 
-<`message`> part of the signature.
+The Multisig format allows tools that don't recognize the key codec--or any of
+this format other than varuint and varbytes--to know how many octets are in the
+Multisig data object and skip over it. This format is also designed to support
+any kind of digital signature, even signatures with multiple signature payloads
+such as threshold signatures. This also supports building combined signatures
+that contain the signed data in the <`message`> part of the signature.
