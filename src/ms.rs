@@ -3,7 +3,6 @@ use multibase::Base;
 use multicodec::Codec;
 use multitrait::TryDecodeFrom;
 use multiutil::{BaseEncoded, CodecInfo, EncodingInfo, Varbytes, Varuint};
-use ssh_key::{Algorithm, Signature};
 use std::fmt;
 
 /// the multisig sigil
@@ -172,9 +171,9 @@ impl Builder {
     }
 
     /// create new v1 from ssh Signature
-    pub fn new_from_ssh_signature(sig: &Signature) -> Result<Self, Error> {
+    pub fn new_from_ssh_signature(sig: &ssh_key::Signature) -> Result<Self, Error> {
         match sig.algorithm() {
-            Algorithm::Ed25519 => Ok(Self {
+            ssh_key::Algorithm::Ed25519 => Ok(Self {
                 codec: Codec::Ed25519Pub,
                 payloads: vec![sig.as_bytes().to_vec()],
                 ..Default::default()
