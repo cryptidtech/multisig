@@ -1,7 +1,5 @@
-use thiserror::Error;
-
 /// Errors created by this library
-#[derive(Clone, Debug, Eq, Error, PartialEq)]
+#[derive(Clone, Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
     /// Attributes error
@@ -42,7 +40,7 @@ pub enum Error {
 }
 
 /// Attributes errors created by this library
-#[derive(Clone, Debug, Eq, Error, PartialEq)]
+#[derive(Clone, Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum AttributesError {
     /// Unsupported signature algorithm
