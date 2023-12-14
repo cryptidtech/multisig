@@ -2,7 +2,8 @@ use crate::Error;
 use std::{cell::RefCell, rc::Rc};
 
 // algorithms implement different sets of view
-pub(crate) mod ed25519; // SigDataView
+pub(crate) mod ed25519;
+pub(crate) mod secp256k1;
 
 ///
 /// Attributes views let you inquire about the Multisig and retrieve data

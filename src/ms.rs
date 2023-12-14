@@ -1,4 +1,8 @@
-use crate::{error::AttributesError, sig_views::ed25519, AttrId, Error, SigDataView, SigViews};
+use crate::{
+    error::AttributesError,
+    sig_views::{ed25519, secp256k1},
+    AttrId, Error, SigDataView, SigViews,
+};
 use multibase::Base;
 use multicodec::Codec;
 use multitrait::TryDecodeFrom;
@@ -142,6 +146,7 @@ impl SigViews for Multisig {
     fn sig_data_view<'a>(&'a self) -> Result<Rc<RefCell<dyn SigDataView + 'a>>, Error> {
         match self.codec {
             Codec::Ed25519Pub => Ok(Rc::new(RefCell::new(ed25519::View::try_from(self)?))),
+            Codec::Secp256K1Pub => Ok(Rc::new(RefCell::new(secp256k1::View::try_from(self)?))),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
