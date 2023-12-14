@@ -172,12 +172,21 @@ impl Builder {
 
     /// create new v1 from ssh Signature
     pub fn new_from_ssh_signature(sig: &ssh_key::Signature) -> Result<Self, Error> {
+        use ssh_key::Algorithm::*;
         match sig.algorithm() {
-            ssh_key::Algorithm::Ed25519 => Ok(Self {
+            Ed25519 => Ok(Self {
                 codec: Codec::Ed25519Pub,
                 sig_bytes: Some(sig.as_bytes().to_vec()),
                 ..Default::default()
             }),
+            Other(name) => match name.as_str() {
+                "secp256k1" => Ok(Self {
+                    codec: Codec::Secp256K1Pub,
+                    sig_bytes: Some(sig.as_bytes().to_vec()),
+                    ..Default::default()
+                }),
+                _ => Err(Error::UnsupportedAlgorithm(name.as_str().to_string())),
+            },
             _ => Err(Error::UnsupportedAlgorithm(sig.algorithm().to_string())),
         }
     }
