@@ -49,6 +49,9 @@ pub enum AttributesError {
     /// No key data attribute
     #[error("Signature data missing")]
     MissingSignature,
+    /// No payload encoding recorded
+    #[error("Signature missing payload encoding")]
+    MissingPayloadEncoding,
     /// Invalid attribute name
     #[error("Invalid attribute name {0}")]
     InvalidAttributeName(String),

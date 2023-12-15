@@ -1,7 +1,7 @@
 use crate::{
     error::AttributesError,
     sig_views::{ed25519, secp256k1},
-    AttrId, Error, SigDataView, SigViews,
+    AttrId, AttrView, Error, SigDataView, SigViews,
 };
 use multibase::Base;
 use multicodec::Codec;
@@ -142,6 +142,14 @@ impl fmt::Debug for Multisig {
 }
 
 impl SigViews for Multisig {
+    /// Provide a read-only view to access the signature attributes
+    fn attr_view<'a>(&'a self) -> Result<Rc<RefCell<dyn AttrView + 'a>>, Error> {
+        match self.codec {
+            Codec::Ed25519Pub => Ok(Rc::new(RefCell::new(ed25519::View::try_from(self)?))),
+            Codec::Secp256K1Pub => Ok(Rc::new(RefCell::new(secp256k1::View::try_from(self)?))),
+            _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
+        }
+    }
     /// Provide a read-only view to access signature data
     fn sig_data_view<'a>(&'a self) -> Result<Rc<RefCell<dyn SigDataView + 'a>>, Error> {
         match self.codec {
@@ -159,6 +167,7 @@ pub struct Builder {
     message: Option<Vec<u8>>,
     sig_bytes: Option<Vec<u8>>,
     base_encoding: Option<Base>,
+    payload_encoding: Option<Codec>,
 }
 
 impl Builder {
@@ -197,6 +206,12 @@ impl Builder {
         self
     }
 
+    /// set the payload encoding codec
+    pub fn with_payload_encoding(mut self, codec: Codec) -> Self {
+        self.payload_encoding = Some(codec);
+        self
+    }
+
     /// add a message payload for a combined signature
     pub fn with_message_bytes(mut self, msg: &impl AsRef<[u8]>) -> Self {
         let m: Vec<u8> = msg.as_ref().into();
@@ -230,6 +245,10 @@ impl Builder {
             .clone()
             .ok_or_else(|| AttributesError::MissingSignature)?;
         attributes.insert(AttrId::SigData, sig_bytes);
+        if let Some(encoding) = self.payload_encoding {
+            let v: Vec<u8> = encoding.into();
+            attributes.insert(AttrId::PayloadEncoding, v);
+        }
         Ok(Multisig {
             codec,
             message,

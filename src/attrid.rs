@@ -10,6 +10,8 @@ use std::fmt;
 pub enum AttrId {
     /// the signature data
     SigData,
+    /// the payload encoding
+    PayloadEncoding,
 }
 
 impl AttrId {
@@ -21,7 +23,8 @@ impl AttrId {
     /// Convert the attribute id to &str
     pub fn as_str(&self) -> &str {
         match self {
-            AttrId::SigData => "sig-data",
+            Self::SigData => "sig-data",
+            Self::PayloadEncoding => "payload-encoding",
         }
     }
 }
@@ -37,7 +40,8 @@ impl TryFrom<u8> for AttrId {
 
     fn try_from(c: u8) -> Result<Self, Self::Error> {
         match c {
-            0 => Ok(AttrId::SigData),
+            0 => Ok(Self::SigData),
+            1 => Ok(Self::PayloadEncoding),
             _ => Err(AttributesError::InvalidAttributeValue(c).into()),
         }
     }
@@ -64,7 +68,7 @@ impl<'a> TryDecodeFrom<'a> for AttrId {
 
     fn try_decode_from(bytes: &'a [u8]) -> Result<(Self, &'a [u8]), Self::Error> {
         let (code, ptr) = u8::try_decode_from(bytes)?;
-        Ok((AttrId::try_from(code)?, ptr))
+        Ok((Self::try_from(code)?, ptr))
     }
 }
 
@@ -73,7 +77,8 @@ impl TryFrom<&str> for AttrId {
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         match s {
-            "sig-data" => Ok(AttrId::SigData),
+            "sig-data" => Ok(Self::SigData),
+            "payload-encoding" => Ok(Self::PayloadEncoding),
             _ => Err(AttributesError::InvalidAttributeName(s.to_string()).into()),
         }
     }
