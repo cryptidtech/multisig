@@ -12,6 +12,14 @@ pub enum AttrId {
     SigData,
     /// the payload encoding
     PayloadEncoding,
+    /// threshold signature threshold
+    Threshold,
+    /// threshold signature limit
+    Limit,
+    /// threshold signature share identifier
+    ShareIdentifier,
+    /// codec-specific threshold signature data
+    ThresholdData,
 }
 
 impl AttrId {
@@ -25,6 +33,10 @@ impl AttrId {
         match self {
             Self::SigData => "sig-data",
             Self::PayloadEncoding => "payload-encoding",
+            Self::Threshold => "threshold",
+            Self::Limit => "limit",
+            Self::ShareIdentifier => "share-identifier",
+            Self::ThresholdData => "threshold-data",
         }
     }
 }
@@ -42,6 +54,10 @@ impl TryFrom<u8> for AttrId {
         match c {
             0 => Ok(Self::SigData),
             1 => Ok(Self::PayloadEncoding),
+            2 => Ok(Self::Threshold),
+            3 => Ok(Self::Limit),
+            4 => Ok(Self::ShareIdentifier),
+            5 => Ok(Self::ThresholdData),
             _ => Err(AttributesError::InvalidAttributeValue(c).into()),
         }
     }
@@ -49,15 +65,14 @@ impl TryFrom<u8> for AttrId {
 
 impl Into<Vec<u8>> for AttrId {
     fn into(self) -> Vec<u8> {
-        let v: u8 = self.into();
-        v.encode_into()
+        self.code().encode_into()
     }
 }
 
 impl<'a> TryFrom<&'a [u8]> for AttrId {
     type Error = Error;
 
-    fn try_from(bytes: &'a [u8]) -> Result<AttrId, Error> {
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
         let (id, _) = Self::try_decode_from(bytes)?;
         Ok(id)
     }
@@ -76,9 +91,13 @@ impl TryFrom<&str> for AttrId {
     type Error = Error;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        match s {
+        match s.to_ascii_lowercase().as_str() {
             "sig-data" => Ok(Self::SigData),
             "payload-encoding" => Ok(Self::PayloadEncoding),
+            "threshold" => Ok(Self::Threshold),
+            "limit" => Ok(Self::Limit),
+            "share-identifier" => Ok(Self::ShareIdentifier),
+            "threshold-data" => Ok(Self::ThresholdData),
             _ => Err(AttributesError::InvalidAttributeName(s.to_string()).into()),
         }
     }

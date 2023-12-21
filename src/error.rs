@@ -5,6 +5,9 @@ pub enum Error {
     /// Attributes error
     #[error(transparent)]
     Attributes(#[from] AttributesError),
+    /// Sharess error
+    #[error(transparent)]
+    Shares(#[from] SharesError),
 
     /// A multibase conversion error
     #[error(transparent)]
@@ -25,6 +28,9 @@ pub enum Error {
     /// Utf8 error
     #[error(transparent)]
     Utf8(#[from] std::string::FromUtf8Error),
+    /// Vsss error
+    #[error("Vsss share error: {0}")]
+    Vsss(String),
     /// Missing sigil 0x39
     #[error("Missing Multisig sigil")]
     MissingSigil,
@@ -52,10 +58,58 @@ pub enum AttributesError {
     /// No payload encoding recorded
     #[error("Signature missing payload encoding")]
     MissingPayloadEncoding,
+    /// No threshold attribute
+    #[error("Signature missing threshold")]
+    MissingThreshold,
+    /// No limit attribute
+    #[error("Signature missing limi")]
+    MissingLimit,
+    /// No identifier attribute
+    #[error("Signature missing identifier")]
+    MissingIdentifier,
+    /// No threshold data attribute
+    #[error("Signature missing threshold data")]
+    MissingThresholdData,
     /// Invalid attribute name
     #[error("Invalid attribute name {0}")]
     InvalidAttributeName(String),
     /// Invalid attribute value
     #[error("Invalid attribute value {0}")]
     InvalidAttributeValue(u8),
+}
+
+/// Shares errors created by this library
+#[derive(Clone, Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum SharesError {
+    /// Too many shares
+    #[error("Threshold signature has too many shares")]
+    TooManyShares,
+    /// Missing share data
+    #[error("Missing share data")]
+    MissingShareData,
+    /// Missing share type id
+    #[error("Missing share type")]
+    MissingShareType,
+    /// Invalid share type id
+    #[error("Invalid share type id {0}")]
+    InvalidShareTypeId(u8),
+    /// Invalid share type name
+    #[error("Invalid share type name {0}")]
+    InvalidShareTypeName(String),
+    /// Not a signature share
+    #[error("Not a signature share")]
+    NotASignatureShare,
+    /// Is a signature share
+    #[error("Is a signature share")]
+    IsASignatureShare,
+    /// Share type mismatch
+    #[error("Signature share type mismatch")]
+    ShareTypeMismatch,
+    /// Share combine failed
+    #[error("Signature share combine failed: {0}")]
+    ShareCombineFailed(String),
+    /// Not enough shares to reconstruct the siganture
+    #[error("Not enough shares to reconstruct the signature")]
+    NotEnoughShares,
 }
