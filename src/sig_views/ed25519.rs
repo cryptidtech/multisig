@@ -1,4 +1,7 @@
-use crate::{error::AttributesError, AttrId, AttrView, Error, Multisig, SigDataView};
+use crate::{
+    error::{AttributesError, ConversionsError},
+    AttrId, AttrView, Error, Multisig, SigConvView, SigDataView, SigViews,
+};
 use multicodec::Codec;
 
 pub(crate) struct View<'a> {
@@ -37,5 +40,18 @@ impl<'a> SigDataView for View<'a> {
             .get(&AttrId::SigData)
             .ok_or(AttributesError::MissingSignature)?;
         Ok(sig.clone())
+    }
+}
+
+impl<'a> SigConvView for View<'a> {
+    /// convert to SSH signature format
+    fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
+        // get the signature data
+        let dv = self.ms.sig_data_view()?;
+        let sig_bytes = dv.sig_bytes()?;
+        Ok(
+            ssh_key::Signature::new(ssh_key::Algorithm::Ed25519, sig_bytes)
+                .map_err(|e| ConversionsError::SshSig(e))?,
+        )
     }
 }

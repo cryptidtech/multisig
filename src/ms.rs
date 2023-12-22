@@ -1,7 +1,7 @@
 use crate::{
     error::AttributesError,
     sig_views::{bls12381, ed25519, secp256k1},
-    AttrId, AttrView, Error, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
+    AttrId, AttrView, Error, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
 };
 use blsful::{vsss_rs::Share, SignatureShare};
 use elliptic_curve::group::GroupEncoding;
@@ -168,6 +168,18 @@ impl SigViews for Multisig {
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
+    /// Provide a read-only view to access signature data
+    fn sig_conv_view<'a>(&'a self) -> Result<Box<dyn SigConvView + 'a>, Error> {
+        match self.codec {
+            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
+            Codec::Bls12381G1Sig
+            | Codec::Bls12381G2Sig
+            | Codec::Bls12381G1SigShare
+            | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
+            _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
+        }
+    }
     /// Provide a read-only view to access the threshold signature attributes
     fn threshold_attr_view<'a>(&'a self) -> Result<Box<dyn ThresholdAttrView + 'a>, Error> {
         match self.codec {
@@ -222,10 +234,52 @@ impl Builder {
                 })
             }
             Other(name) => match name.as_str() {
-                "secp256k1" => {
+                secp256k1::ALGORITHM_NAME => {
                     attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
                     Ok(Self {
                         codec: Codec::Es256K,
+                        attributes: Some(attributes),
+                        ..Default::default()
+                    })
+                }
+                bls12381::ALGORITHM_NAME_G1 => {
+                    attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
+                    Ok(Self {
+                        codec: Codec::Bls12381G1Sig,
+                        attributes: Some(attributes),
+                        ..Default::default()
+                    })
+                }
+                bls12381::ALGORITHM_NAME_G2 => {
+                    attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
+                    Ok(Self {
+                        codec: Codec::Bls12381G2Sig,
+                        attributes: Some(attributes),
+                        ..Default::default()
+                    })
+                }
+                bls12381::ALGORITHM_NAME_G1_SHARE => {
+                    let sig_share = bls12381::SigShare::try_from(sig.as_bytes())?;
+                    attributes.insert(AttrId::ShareIdentifier, Varuint(sig_share.0).into());
+                    attributes.insert(AttrId::Threshold, Varuint(sig_share.1).into());
+                    attributes.insert(AttrId::Limit, Varuint(sig_share.2).into());
+                    attributes.insert(AttrId::ThresholdData, sig_share.3.into());
+                    attributes.insert(AttrId::SigData, sig_share.4);
+                    Ok(Self {
+                        codec: Codec::Bls12381G1SigShare,
+                        attributes: Some(attributes),
+                        ..Default::default()
+                    })
+                }
+                bls12381::ALGORITHM_NAME_G2_SHARE => {
+                    let sig_share = bls12381::SigShare::try_from(sig.as_bytes())?;
+                    attributes.insert(AttrId::ShareIdentifier, Varuint(sig_share.0).into());
+                    attributes.insert(AttrId::Threshold, Varuint(sig_share.1).into());
+                    attributes.insert(AttrId::Limit, Varuint(sig_share.2).into());
+                    attributes.insert(AttrId::ThresholdData, sig_share.3.into());
+                    attributes.insert(AttrId::SigData, sig_share.4);
+                    Ok(Self {
+                        codec: Codec::Bls12381G1SigShare,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -270,10 +324,10 @@ impl Builder {
     where
         C: blsful::BlsSignatureImpl,
     {
-        let share_type_id = match sigshare {
-            SignatureShare::Basic(_) => bls12381::ShareTypeId::Basic,
-            SignatureShare::MessageAugmentation(_) => bls12381::ShareTypeId::MessageAugmentation,
-            SignatureShare::ProofOfPossession(_) => bls12381::ShareTypeId::ProofOfPossession,
+        let scheme_type_id = match sigshare {
+            SignatureShare::Basic(_) => bls12381::SchemeTypeId::Basic,
+            SignatureShare::MessageAugmentation(_) => bls12381::SchemeTypeId::MessageAugmentation,
+            SignatureShare::ProofOfPossession(_) => bls12381::SchemeTypeId::ProofOfPossession,
         };
         let sigshare = sigshare.as_raw_value();
         let identifier = sigshare.identifier();
@@ -287,7 +341,7 @@ impl Builder {
                 ))
             }
         };
-        let threshold_data: Vec<u8> = share_type_id.into();
+        let threshold_data: Vec<u8> = scheme_type_id.into();
 
         let mut attributes = BTreeMap::new();
         attributes.insert(AttrId::SigData, value);
@@ -374,17 +428,16 @@ impl Builder {
         let codec = self.codec;
         let message = self.message.unwrap_or_default();
         let attributes = self.attributes.unwrap_or_default();
-        let ms = Multisig {
+        let mut ms = Multisig {
             codec,
             message,
             attributes,
         };
         if let Some(shares) = self.shares {
-            let mut ms = ms.clone();
-            for share in shares {
+            for share in &shares {
                 ms = {
                     let tv = ms.threshold_view()?;
-                    tv.add_share(&share)?
+                    tv.add_share(share)?
                 };
             }
             Ok(ms)
@@ -422,6 +475,16 @@ mod tests {
     #[test]
     fn test_eddsa() {
         let ms = Builder::new(Codec::Eddsa)
+            .with_signature_bytes(&[0u8; 64])
+            .try_build()
+            .unwrap();
+        let v: Vec<u8> = ms.clone().into();
+        assert_eq!(ms, Multisig::try_from(v.as_slice()).unwrap());
+    }
+
+    #[test]
+    fn test_es256k() {
+        let ms = Builder::new(Codec::Es256K)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
@@ -485,6 +548,121 @@ mod tests {
         let mut builder = Builder::new(Codec::Bls12381G2Sig);
         for sig in &sigs {
             builder = builder.add_signature_share(sig);
+        }
+        let ms2 = builder.try_build().unwrap();
+
+        let av = ms2.threshold_attr_view().unwrap();
+        assert_eq!(3, av.threshold().unwrap());
+        assert_eq!(4, av.limit().unwrap());
+
+        let tv = ms2.threshold_view().unwrap();
+        let ms3 = tv.combine().unwrap();
+
+        assert_eq!(ms1, ms3);
+    }
+
+    #[test]
+    fn test_eddsa_ssh_roundtrip() {
+        let ms1 = Builder::new(Codec::Eddsa)
+            .with_signature_bytes(&[0u8; 64])
+            .try_build()
+            .unwrap();
+        let cv = ms1.sig_conv_view().unwrap();
+        let ms_ssh = cv.to_ssh_signature().unwrap();
+        let ms2 = Builder::new_from_ssh_signature(&ms_ssh)
+            .unwrap()
+            .try_build()
+            .unwrap();
+        assert_eq!(ms1, ms2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_es256k_ssh_roundtrip() {
+        let ms1 = Builder::new(Codec::Es256K)
+            .with_signature_bytes(&[0u8; 64])
+            .try_build()
+            .unwrap();
+        let cv = ms1.sig_conv_view().unwrap();
+        let ms_ssh = cv.to_ssh_signature().unwrap();
+        let ms2 = Builder::new_from_ssh_signature(&ms_ssh)
+            .unwrap()
+            .try_build()
+            .unwrap();
+        assert_eq!(ms1, ms2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bls_signature_ssh_roundtrip() {
+        let sk = blsful::Bls12381G1::new_secret_key();
+        let sig = sk
+            .sign(
+                blsful::SignatureSchemes::ProofOfPossession,
+                b"for great justice, move every zig!",
+            )
+            .unwrap();
+
+        let ms1 = Builder::new_from_bls_signature(&sig)
+            .unwrap()
+            .try_build()
+            .unwrap();
+
+        let cv = ms1.sig_conv_view().unwrap();
+        let ssh_ms = cv.to_ssh_signature().unwrap();
+
+        let ms2 = Builder::new_from_ssh_signature(&ssh_ms)
+            .unwrap()
+            .try_build()
+            .unwrap();
+
+        assert_eq!(ms1, ms2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bls_signature_combine_ssh_roundtrip() {
+        let sk = blsful::Bls12381G2::new_secret_key();
+        let sig = sk
+            .sign(
+                blsful::SignatureSchemes::ProofOfPossession,
+                b"for great justice, move every zig!",
+            )
+            .unwrap();
+
+        let ms1 = Builder::new_from_bls_signature(&sig)
+            .unwrap()
+            .try_build()
+            .unwrap();
+
+        let sk_shares = sk.split(3, 4).unwrap();
+
+        let mut sigs = Vec::default();
+        sk_shares.iter().for_each(|sk| {
+            let sig = sk
+                .sign(
+                    blsful::SignatureSchemes::ProofOfPossession,
+                    b"for great justice, move every zig!",
+                )
+                .unwrap();
+            sigs.push({
+                let ms = Builder::new_from_bls_signature_share(3, 4, &sig)
+                    .unwrap()
+                    .try_build()
+                    .unwrap();
+                let sc = ms.sig_conv_view().unwrap();
+                sc.to_ssh_signature().unwrap()
+            });
+        });
+
+        // build a new signature from the parts
+        let mut builder = Builder::new(Codec::Bls12381G2Sig);
+        for sig in &sigs {
+            let ms = Builder::new_from_ssh_signature(sig)
+                .unwrap()
+                .try_build()
+                .unwrap();
+            builder = builder.add_signature_share(&ms);
         }
         let ms2 = builder.try_build().unwrap();
 

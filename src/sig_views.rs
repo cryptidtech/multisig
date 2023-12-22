@@ -1,10 +1,12 @@
 use crate::{Error, Multisig};
 use multicodec::Codec;
 
-// algorithms implement different sets of view
-pub(crate) mod bls12381;
-pub(crate) mod ed25519;
-pub(crate) mod secp256k1;
+/// BLS12 381 G1/G2 signature implementation
+pub mod bls12381;
+/// Edwards curve 25519 signature implementation
+pub mod ed25519;
+/// Koblitz 256k1 curve implmentation (a.k.a. the Bitcoin curve)
+pub mod secp256k1;
 
 ///
 /// Attributes views let you inquire about the Multisig and retrieve data
@@ -23,6 +25,12 @@ pub trait SigDataView {
     fn sig_bytes(&self) -> Result<Vec<u8>, Error>;
 }
 
+/// trait for converting Multisigs to other formats
+pub trait SigConvView {
+    /// convert the Multisig to an SSH signature
+    fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error>;
+}
+
 /// trait for getting threshold attributes
 pub trait ThresholdAttrView {
     /// get the threshold value for this multisig share
@@ -31,6 +39,8 @@ pub trait ThresholdAttrView {
     fn limit(&self) -> Result<usize, Error>;
     /// get the identifier value for this multisig share
     fn identifier(&self) -> Result<u8, Error>;
+    /// get the threshold data associated with the signature
+    fn threshold_data(&self) -> Result<&[u8], Error>;
 }
 
 /// trait for accumulating shares to rebuild a threshold signature
@@ -49,6 +59,8 @@ pub trait SigViews {
     fn attr_view<'a>(&'a self) -> Result<Box<dyn AttrView + 'a>, Error>;
     /// Provide a read-only view to access signature data
     fn sig_data_view<'a>(&'a self) -> Result<Box<dyn SigDataView + 'a>, Error>;
+    /// Provide a view for converting to other signature formats
+    fn sig_conv_view<'a>(&'a self) -> Result<Box<dyn SigConvView + 'a>, Error>;
     /// Provide a read-only view to access the threshold signature attributes
     fn threshold_attr_view<'a>(&'a self) -> Result<Box<dyn ThresholdAttrView + 'a>, Error>;
     /// Provide the view for adding a share to a multisig

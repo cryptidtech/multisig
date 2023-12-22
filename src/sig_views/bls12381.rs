@@ -1,7 +1,7 @@
 use crate::{
-    error::{AttributesError, SharesError},
-    AttrId, AttrView, Builder, Error, Multisig, SigDataView, SigViews, ThresholdAttrView,
-    ThresholdView,
+    error::{AttributesError, ConversionsError, SharesError},
+    AttrId, AttrView, Builder, Error, Multisig, SigConvView, SigDataView, SigViews,
+    ThresholdAttrView, ThresholdView,
 };
 use blsful::{vsss_rs::Share, Bls12381G1Impl, Bls12381G2Impl, Signature, SignatureShare};
 use multicodec::Codec;
@@ -9,19 +9,29 @@ use multitrait::{EncodeInto, TryDecodeFrom};
 use multiutil::{Varbytes, Varuint};
 use std::{collections::BTreeMap, fmt};
 
+/// the name used to identify these signatures in non-Multikey formats
+pub const ALGORITHM_NAME_G1: &'static str = "bls12_381-g1@multisig";
+/// the name used to identify these signatures in non-Multikey formats
+pub const ALGORITHM_NAME_G1_SHARE: &'static str = "bls12_381-g1-share@multisig";
+/// the name used to identify these signatures in non-Multikey formats
+pub const ALGORITHM_NAME_G2: &'static str = "bls12_381-g2@multisig";
+/// the name used to identify these signatures in non-Multikey formats
+pub const ALGORITHM_NAME_G2_SHARE: &'static str = "bls12_381-g2-share@multisig";
+
+/// The different signature scheme methods offered in the blsful BLS crate
 #[repr(u8)]
 #[derive(Clone, Copy, Default, Hash, Ord, PartialOrd, PartialEq, Eq)]
-pub(crate) enum ShareTypeId {
+pub enum SchemeTypeId {
     /// Basic
-    #[default]
     Basic,
     /// Message Augmentation
     MessageAugmentation,
     /// ProofOfPossession
+    #[default]
     ProofOfPossession,
 }
 
-impl ShareTypeId {
+impl SchemeTypeId {
     /// Get the code for the attribute id
     pub fn code(&self) -> u8 {
         self.clone().into()
@@ -37,13 +47,13 @@ impl ShareTypeId {
     }
 }
 
-impl Into<u8> for ShareTypeId {
+impl Into<u8> for SchemeTypeId {
     fn into(self) -> u8 {
         self as u8
     }
 }
 
-impl TryFrom<u8> for ShareTypeId {
+impl TryFrom<u8> for SchemeTypeId {
     type Error = Error;
 
     fn try_from(c: u8) -> Result<Self, Self::Error> {
@@ -51,18 +61,18 @@ impl TryFrom<u8> for ShareTypeId {
             0 => Ok(Self::Basic),
             1 => Ok(Self::MessageAugmentation),
             2 => Ok(Self::ProofOfPossession),
-            _ => Err(SharesError::InvalidShareTypeId(c).into()),
+            _ => Err(SharesError::InvalidSchemeTypeId(c).into()),
         }
     }
 }
 
-impl Into<Vec<u8>> for ShareTypeId {
+impl Into<Vec<u8>> for SchemeTypeId {
     fn into(self) -> Vec<u8> {
         self.code().encode_into()
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for ShareTypeId {
+impl<'a> TryFrom<&'a [u8]> for SchemeTypeId {
     type Error = Error;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
@@ -71,7 +81,7 @@ impl<'a> TryFrom<&'a [u8]> for ShareTypeId {
     }
 }
 
-impl<'a> TryDecodeFrom<'a> for ShareTypeId {
+impl<'a> TryDecodeFrom<'a> for SchemeTypeId {
     type Error = Error;
 
     fn try_decode_from(bytes: &'a [u8]) -> Result<(Self, &'a [u8]), Self::Error> {
@@ -80,7 +90,7 @@ impl<'a> TryDecodeFrom<'a> for ShareTypeId {
     }
 }
 
-impl TryFrom<&str> for ShareTypeId {
+impl TryFrom<&str> for SchemeTypeId {
     type Error = Error;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
@@ -93,19 +103,25 @@ impl TryFrom<&str> for ShareTypeId {
     }
 }
 
-impl fmt::Display for ShareTypeId {
+impl fmt::Display for SchemeTypeId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
 }
 
+/// tuple of signature share data with threshold attributes
 #[derive(Clone)]
-pub(crate) struct SigShare(
-    pub(crate) u8,          // identifier
-    pub(crate) usize,       // threshold
-    pub(crate) usize,       // limit
-    pub(crate) ShareTypeId, // share type
-    pub(crate) Vec<u8>,     // share bytes
+pub struct SigShare(
+    /// identifier
+    pub u8,
+    /// threshold
+    pub usize,
+    /// limit
+    pub usize,
+    /// signature scheme
+    pub SchemeTypeId,
+    /// share bytes
+    pub Vec<u8>,
 );
 
 impl Into<Vec<u8>> for SigShare {
@@ -145,7 +161,7 @@ impl<'a> TryDecodeFrom<'a> for SigShare {
         // try to decode the limit
         let (limit, ptr) = Varuint::<usize>::try_decode_from(ptr)?;
         // try to decode the share type id
-        let (share_type, ptr) = ShareTypeId::try_decode_from(ptr)?;
+        let (share_type, ptr) = SchemeTypeId::try_decode_from(ptr)?;
         // try to decode the share data
         let (share_data, ptr) = Varbytes::try_decode_from(ptr)?;
         Ok((
@@ -225,7 +241,7 @@ impl<'a> TryFrom<&'a Multisig> for View<'a> {
 
 impl<'a> AttrView for View<'a> {
     /// for Bls Multisigs, the payload encoding is stored using the
-    /// ShareTypeId::PayloadEncoding attribute id.
+    /// SchemeTypeId::PayloadEncoding attribute id.
     fn payload_encoding(&self) -> Result<Codec, Error> {
         let v = self
             .ms
@@ -239,7 +255,7 @@ impl<'a> AttrView for View<'a> {
 
 impl<'a> SigDataView for View<'a> {
     /// For Bls Multisig values, the sig data is stored using the
-    /// ShareTypeId::SigData attribute id.
+    /// SchemeTypeId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
         let sig = self
             .ms
@@ -247,6 +263,77 @@ impl<'a> SigDataView for View<'a> {
             .get(&AttrId::SigData)
             .ok_or(AttributesError::MissingSignature)?;
         Ok(sig.clone())
+    }
+}
+
+impl<'a> SigConvView for View<'a> {
+    /// convert to SSH signature format
+    fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
+        // get the signature data
+        let dv = self.ms.sig_data_view()?;
+        let sig_bytes = dv.sig_bytes()?;
+
+        match self.ms.codec {
+            Codec::Bls12381G1Sig => Ok(ssh_key::Signature::new(
+                ssh_key::Algorithm::Other(
+                    ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1)
+                        .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                ),
+                sig_bytes,
+            )
+            .map_err(|e| ConversionsError::SshSig(e))?),
+            Codec::Bls12381G2Sig => Ok(ssh_key::Signature::new(
+                ssh_key::Algorithm::Other(
+                    ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2)
+                        .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                ),
+                sig_bytes,
+            )
+            .map_err(|e| ConversionsError::SshSig(e))?),
+            Codec::Bls12381G1SigShare => {
+                // get the threshold attributes
+                let av = self.ms.threshold_attr_view()?;
+                let threshold = av.threshold()?;
+                let limit = av.limit()?;
+                let identifier = av.identifier()?;
+                let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
+
+                // create the sig share tuple
+                let sig_data: Vec<u8> =
+                    SigShare(identifier, threshold, limit, scheme_type, sig_bytes).into();
+
+                Ok(ssh_key::Signature::new(
+                    ssh_key::Algorithm::Other(
+                        ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1_SHARE)
+                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                    ),
+                    sig_data,
+                )
+                .map_err(|e| ConversionsError::SshSig(e))?)
+            }
+            Codec::Bls12381G2SigShare => {
+                // get the threshold attributes
+                let av = self.ms.threshold_attr_view()?;
+                let threshold = av.threshold()?;
+                let limit = av.limit()?;
+                let identifier = av.identifier()?;
+                let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
+
+                // create the sig share tuple
+                let sig_data: Vec<u8> =
+                    SigShare(identifier, threshold, limit, scheme_type, sig_bytes).into();
+
+                Ok(ssh_key::Signature::new(
+                    ssh_key::Algorithm::Other(
+                        ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2_SHARE)
+                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                    ),
+                    sig_data,
+                )
+                .map_err(|e| ConversionsError::SshSig(e))?)
+            }
+            _ => Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
+        }
     }
 }
 
@@ -283,6 +370,15 @@ impl<'a> ThresholdAttrView for View<'a> {
             _ => Err(SharesError::NotASignatureShare.into()),
         }
     }
+    /// get the threshold data
+    fn threshold_data(&self) -> Result<&[u8], Error> {
+        let v = self
+            .ms
+            .attributes
+            .get(&AttrId::ThresholdData)
+            .ok_or(AttributesError::MissingThresholdData)?;
+        Ok(v.as_slice())
+    }
 }
 
 /// trait for accumulating shares to rebuild a threshold signature
@@ -301,10 +397,10 @@ impl<'a> ThresholdView for View<'a> {
 
         // current Multisig threshold data
         let threshold_data = {
-            let v = self.ms.attributes.get(&AttrId::ThresholdData);
-            match v {
-                Some(v) => ThresholdData::try_from(v.as_slice())?,
-                None => ThresholdData::default(),
+            let av = self.ms.threshold_attr_view()?;
+            match av.threshold_data() {
+                Ok(b) => ThresholdData::try_from(b).unwrap_or_default(),
+                Err(_) => ThresholdData::default(),
             }
         };
 
@@ -351,18 +447,12 @@ impl<'a> ThresholdView for View<'a> {
         };
 
         let (sdata, identifier, threshold, limit, encoding) = {
-            // get the share's share type out of the threshold data
-            let v = share
-                .attributes
-                .get(&AttrId::ThresholdData)
-                .ok_or(AttributesError::MissingThresholdData)?;
-            let share_type = ShareTypeId::try_from(v.as_slice())?;
-
             // get the share's attributes
             let av = share.threshold_attr_view()?;
             let threshold = av.threshold()?;
             let limit = av.limit()?;
             let identifier = av.identifier()?;
+            let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
 
             // get the share's signature data
             let dv = share.sig_data_view()?;
@@ -375,7 +465,7 @@ impl<'a> ThresholdView for View<'a> {
 
             // create the sig share tuple
             (
-                SigShare(identifier, threshold, limit, share_type, sig_bytes),
+                SigShare(identifier, threshold, limit, scheme_type, sig_bytes),
                 identifier,
                 threshold,
                 limit,
@@ -385,10 +475,10 @@ impl<'a> ThresholdView for View<'a> {
 
         // update the threshold data
         let threshold_data: Vec<u8> = {
-            let v = self.ms.attributes.get(&AttrId::ThresholdData);
-            let mut tdata = match v {
-                Some(v) => ThresholdData::try_from(v.as_slice())?,
-                None => ThresholdData::default(),
+            let av = self.ms.threshold_attr_view()?;
+            let mut tdata = match av.threshold_data() {
+                Ok(b) => ThresholdData::try_from(b).unwrap_or_default(),
+                Err(_) => ThresholdData::default(),
             };
             // insert the share data into the list of shares
             tdata.0.insert(identifier, sdata);
@@ -434,10 +524,10 @@ impl<'a> ThresholdView for View<'a> {
     fn combine(&self) -> Result<Multisig, Error> {
         // current Multisig threshold data
         let threshold_data = {
-            let v = self.ms.attributes.get(&AttrId::ThresholdData);
-            match v {
-                Some(v) => ThresholdData::try_from(v.as_slice())?,
-                None => ThresholdData::default(),
+            let av = self.ms.threshold_attr_view()?;
+            match av.threshold_data() {
+                Ok(b) => ThresholdData::try_from(b).unwrap_or_default(),
+                Err(_) => ThresholdData::default(),
             }
         };
 
@@ -450,7 +540,7 @@ impl<'a> ThresholdView for View<'a> {
 
         match self.ms.codec {
             Codec::Bls12381G1Sig => {
-                let mut share_type_id: Option<ShareTypeId> = None;
+                let mut share_type_id: Option<SchemeTypeId> = None;
                 let mut shares = Vec::default();
                 threshold_data
                     .0
@@ -466,11 +556,11 @@ impl<'a> ThresholdView for View<'a> {
                             share_type_id = Some(share.3);
                         }
                         let s = match share.3 {
-                            ShareTypeId::Basic => SignatureShare::<Bls12381G1Impl>::Basic(vsss),
-                            ShareTypeId::MessageAugmentation => {
+                            SchemeTypeId::Basic => SignatureShare::<Bls12381G1Impl>::Basic(vsss),
+                            SchemeTypeId::MessageAugmentation => {
                                 SignatureShare::<Bls12381G1Impl>::MessageAugmentation(vsss)
                             }
-                            ShareTypeId::ProofOfPossession => {
+                            SchemeTypeId::ProofOfPossession => {
                                 SignatureShare::<Bls12381G1Impl>::ProofOfPossession(vsss)
                             }
                         };
@@ -490,7 +580,7 @@ impl<'a> ThresholdView for View<'a> {
                     .try_build()
             }
             Codec::Bls12381G2Sig => {
-                let mut share_type_id: Option<ShareTypeId> = None;
+                let mut share_type_id: Option<SchemeTypeId> = None;
                 let mut shares = Vec::default();
                 threshold_data
                     .0
@@ -506,11 +596,11 @@ impl<'a> ThresholdView for View<'a> {
                             share_type_id = Some(share.3);
                         }
                         let s = match share.3 {
-                            ShareTypeId::Basic => SignatureShare::<Bls12381G2Impl>::Basic(vsss),
-                            ShareTypeId::MessageAugmentation => {
+                            SchemeTypeId::Basic => SignatureShare::<Bls12381G2Impl>::Basic(vsss),
+                            SchemeTypeId::MessageAugmentation => {
                                 SignatureShare::<Bls12381G2Impl>::MessageAugmentation(vsss)
                             }
-                            ShareTypeId::ProofOfPossession => {
+                            SchemeTypeId::ProofOfPossession => {
                                 SignatureShare::<Bls12381G2Impl>::ProofOfPossession(vsss)
                             }
                         };

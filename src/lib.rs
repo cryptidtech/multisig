@@ -21,7 +21,9 @@ pub use ms::{Builder, EncodedMultisig, Multisig};
 
 /// Views on the multisig
 pub mod sig_views;
-pub use sig_views::{AttrView, SigDataView, SigViews, ThresholdAttrView, ThresholdView};
+pub use sig_views::{
+    AttrView, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
+};
 
 /// Serde serialization
 #[cfg(feature = "serde")]

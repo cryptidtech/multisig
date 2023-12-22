@@ -5,9 +5,12 @@ pub enum Error {
     /// Attributes error
     #[error(transparent)]
     Attributes(#[from] AttributesError),
-    /// Sharess error
+    /// Shares error
     #[error(transparent)]
     Shares(#[from] SharesError),
+    /// Conversions error
+    #[error(transparent)]
+    Conversions(#[from] ConversionsError),
 
     /// A multibase conversion error
     #[error(transparent)]
@@ -92,8 +95,8 @@ pub enum SharesError {
     #[error("Missing share type")]
     MissingShareType,
     /// Invalid share type id
-    #[error("Invalid share type id {0}")]
-    InvalidShareTypeId(u8),
+    #[error("Invalid signature scheme type id {0}")]
+    InvalidSchemeTypeId(u8),
     /// Invalid share type name
     #[error("Invalid share type name {0}")]
     InvalidShareTypeName(String),
@@ -112,4 +115,16 @@ pub enum SharesError {
     /// Not enough shares to reconstruct the siganture
     #[error("Not enough shares to reconstruct the signature")]
     NotEnoughShares,
+}
+
+/// Conversion errors
+#[derive(Clone, Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum ConversionsError {
+    /// Ssh signature conversion error
+    #[error(transparent)]
+    SshSig(#[from] ssh_key::Error),
+    /// Ssh label error
+    #[error(transparent)]
+    SshSigLabel(#[from] ssh_encoding::LabelError),
 }
