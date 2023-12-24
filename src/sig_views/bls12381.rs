@@ -299,6 +299,17 @@ impl<'a> AttrView for View<'a> {
         let encoding = Codec::try_from(v.as_slice())?;
         Ok(encoding)
     }
+    /// Bls signatures have three different schemes which is needed
+    /// for verifying the signatures
+    fn scheme(&self) -> Result<u8, Error> {
+        let v = self
+            .ms
+            .attributes
+            .get(&AttrId::Scheme)
+            .ok_or(AttributesError::MissingScheme)?;
+        let scheme = Varuint::<u8>::try_from(v.as_slice())?;
+        Ok(*scheme)
+    }
 }
 
 impl<'a> SigDataView for View<'a> {
@@ -320,6 +331,10 @@ impl<'a> SigConvView for View<'a> {
         // get the signature data
         let dv = self.ms.sig_data_view()?;
         let sig_bytes = dv.sig_bytes()?;
+
+        // get the scheme
+        let av = self.ms.attr_view()?;
+        let scheme_type = SchemeTypeId::try_from(av.scheme()?)?;
 
         match self.ms.codec {
             Codec::Bls12381G1Sig => Ok(ssh_key::Signature::new(
@@ -344,7 +359,6 @@ impl<'a> SigConvView for View<'a> {
                 let threshold = av.threshold()?;
                 let limit = av.limit()?;
                 let identifier = av.identifier()?;
-                let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
 
                 // create the sig share tuple
                 let sig_data: Vec<u8> =
@@ -365,7 +379,6 @@ impl<'a> SigConvView for View<'a> {
                 let threshold = av.threshold()?;
                 let limit = av.limit()?;
                 let identifier = av.identifier()?;
-                let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
 
                 // create the sig share tuple
                 let sig_data: Vec<u8> =
@@ -464,7 +477,6 @@ impl<'a> ThresholdView for View<'a> {
                     let av = self.ms.attr_view()?;
                     av.payload_encoding()?
                 };
-                let threshold_data: Vec<u8> = share.3.into();
                 // build a multisig share out of the share, preserve the message
                 // and the payload encoding value
                 let share = Builder::new(codec)
@@ -474,7 +486,7 @@ impl<'a> ThresholdView for View<'a> {
                     .with_limit(share.2)
                     .with_signature_bytes(&share.4)
                     .with_payload_encoding(encoding)
-                    .with_threshold_data(&threshold_data)
+                    .with_scheme(share.3.into())
                     .try_build()?;
                 // add it to the list of shares
                 shares.push(share);
@@ -495,12 +507,14 @@ impl<'a> ThresholdView for View<'a> {
         };
 
         let (sdata, identifier, threshold, limit, encoding) = {
+            // get the scheme
+            let av = share.attr_view()?;
+            let scheme_type = SchemeTypeId::try_from(av.scheme()?)?;
             // get the share's attributes
             let av = share.threshold_attr_view()?;
             let threshold = av.threshold()?;
             let limit = av.limit()?;
             let identifier = av.identifier()?;
-            let scheme_type = SchemeTypeId::try_from(av.threshold_data()?)?;
 
             // get the share's signature data
             let dv = share.sig_data_view()?;

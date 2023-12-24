@@ -17,7 +17,7 @@ impl<'a> TryFrom<&'a Multisig> for View<'a> {
 }
 
 impl<'a> AttrView for View<'a> {
-    /// for Ed25519Pub Multisigs, the payload encoding is stored using the
+    /// for EdDSA Multisigs, the payload encoding is stored using the
     /// AttrId::PayloadEncoding attribute id.
     fn payload_encoding(&self) -> Result<Codec, Error> {
         let v = self
@@ -28,10 +28,14 @@ impl<'a> AttrView for View<'a> {
         let encoding = Codec::try_from(v.as_slice())?;
         Ok(encoding)
     }
+    /// EdDSA signatures only have one scheme so this is meaningless
+    fn scheme(&self) -> Result<u8, Error> {
+        Ok(0)
+    }
 }
 
 impl<'a> SigDataView for View<'a> {
-    /// For Ed25519Pub Multisig values, the sig data is stored using the
+    /// For EdDSA Multisig values, the sig data is stored using the
     /// AttrId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
         let sig = self

@@ -58,9 +58,12 @@ pub enum AttributesError {
     /// No key data attribute
     #[error("Signature data missing")]
     MissingSignature,
-    /// No payload encoding recorded
+    /// No payload encoding
     #[error("Signature missing payload encoding")]
     MissingPayloadEncoding,
+    /// No scheme
+    #[error("Signature missing scheme")]
+    MissingScheme,
     /// No threshold attribute
     #[error("Signature missing threshold")]
     MissingThreshold,

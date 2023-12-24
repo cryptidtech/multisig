@@ -17,6 +17,8 @@ pub mod secp256k1;
 pub trait AttrView {
     /// get the codec that the signed message was encoded with
     fn payload_encoding(&self) -> Result<Codec, Error>;
+    /// get the signing scheme identifier if any
+    fn scheme(&self) -> Result<u8, Error>;
 }
 
 /// trait for returning the data from a Multisig

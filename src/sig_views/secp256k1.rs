@@ -20,7 +20,7 @@ impl<'a> TryFrom<&'a Multisig> for View<'a> {
 }
 
 impl<'a> AttrView for View<'a> {
-    /// for Secp256K1Pub Multisigs, the payload encoding is stored using the
+    /// for Es256K Multisigs, the payload encoding is stored using the
     /// AttrId::PayloadEncoding attribute id.
     fn payload_encoding(&self) -> Result<Codec, Error> {
         let v = self
@@ -30,6 +30,10 @@ impl<'a> AttrView for View<'a> {
             .ok_or(AttributesError::MissingPayloadEncoding)?;
         let encoding = Codec::try_from(v.as_slice())?;
         Ok(encoding)
+    }
+    /// Es256K only has one scheme so this is meaningless
+    fn scheme(&self) -> Result<u8, Error> {
+        Ok(0)
     }
 }
 

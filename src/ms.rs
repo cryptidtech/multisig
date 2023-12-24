@@ -162,24 +162,24 @@ impl SigViews for Multisig {
     /// Provide a read-only view to access signature data
     fn sig_data_view<'a>(&'a self) -> Result<Box<dyn SigDataView + 'a>, Error> {
         match self.codec {
-            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
-            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
             Codec::Bls12381G1Sig
             | Codec::Bls12381G2Sig
             | Codec::Bls12381G1SigShare
             | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
     /// Provide a read-only view to access signature data
     fn sig_conv_view<'a>(&'a self) -> Result<Box<dyn SigConvView + 'a>, Error> {
         match self.codec {
-            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
-            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
             Codec::Bls12381G1Sig
             | Codec::Bls12381G2Sig
             | Codec::Bls12381G1SigShare
             | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
@@ -266,7 +266,7 @@ impl Builder {
                     attributes.insert(AttrId::ShareIdentifier, Varuint(sig_share.0).into());
                     attributes.insert(AttrId::Threshold, Varuint(sig_share.1).into());
                     attributes.insert(AttrId::Limit, Varuint(sig_share.2).into());
-                    attributes.insert(AttrId::ThresholdData, sig_share.3.into());
+                    attributes.insert(AttrId::Scheme, sig_share.3.into());
                     attributes.insert(AttrId::SigData, sig_share.4);
                     Ok(Self {
                         codec: Codec::Bls12381G1SigShare,
@@ -279,7 +279,7 @@ impl Builder {
                     attributes.insert(AttrId::ShareIdentifier, Varuint(sig_share.0).into());
                     attributes.insert(AttrId::Threshold, Varuint(sig_share.1).into());
                     attributes.insert(AttrId::Limit, Varuint(sig_share.2).into());
-                    attributes.insert(AttrId::ThresholdData, sig_share.3.into());
+                    attributes.insert(AttrId::Scheme, sig_share.3.into());
                     attributes.insert(AttrId::SigData, sig_share.4);
                     Ok(Self {
                         codec: Codec::Bls12381G1SigShare,
@@ -340,14 +340,12 @@ impl Builder {
                 ))
             }
         };
-        let threshold_data: Vec<u8> = scheme_type_id.into();
-
         let mut attributes = BTreeMap::new();
         attributes.insert(AttrId::SigData, value);
         attributes.insert(AttrId::Threshold, Varuint(threshold).into());
         attributes.insert(AttrId::Limit, Varuint(limit).into());
         attributes.insert(AttrId::ShareIdentifier, Varuint(identifier).into());
-        attributes.insert(AttrId::ThresholdData, threshold_data);
+        attributes.insert(AttrId::Scheme, scheme_type_id.into());
         Ok(Self {
             codec,
             attributes: Some(attributes),
@@ -378,6 +376,11 @@ impl Builder {
     /// set the payload encoding codec
     pub fn with_payload_encoding(self, codec: Codec) -> Self {
         self.with_attribute(AttrId::PayloadEncoding, &codec.into())
+    }
+
+    /// set the signing scheme
+    pub fn with_scheme(self, scheme: u8) -> Self {
+        self.with_attribute(AttrId::Scheme, &Varuint(scheme).into())
     }
 
     /// add a signature payload

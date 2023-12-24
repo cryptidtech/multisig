@@ -12,6 +12,8 @@ pub enum AttrId {
     SigData,
     /// the payload encoding
     PayloadEncoding,
+    /// signing scheme
+    Scheme,
     /// threshold signature threshold
     Threshold,
     /// threshold signature limit
@@ -33,6 +35,7 @@ impl AttrId {
         match self {
             Self::SigData => "sig-data",
             Self::PayloadEncoding => "payload-encoding",
+            Self::Scheme => "scheme",
             Self::Threshold => "threshold",
             Self::Limit => "limit",
             Self::ShareIdentifier => "share-identifier",
@@ -54,10 +57,11 @@ impl TryFrom<u8> for AttrId {
         match c {
             0 => Ok(Self::SigData),
             1 => Ok(Self::PayloadEncoding),
-            2 => Ok(Self::Threshold),
-            3 => Ok(Self::Limit),
-            4 => Ok(Self::ShareIdentifier),
-            5 => Ok(Self::ThresholdData),
+            2 => Ok(Self::Scheme),
+            3 => Ok(Self::Threshold),
+            4 => Ok(Self::Limit),
+            5 => Ok(Self::ShareIdentifier),
+            6 => Ok(Self::ThresholdData),
             _ => Err(AttributesError::InvalidAttributeValue(c).into()),
         }
     }
@@ -94,6 +98,7 @@ impl TryFrom<&str> for AttrId {
         match s.to_ascii_lowercase().as_str() {
             "sig-data" => Ok(Self::SigData),
             "payload-encoding" => Ok(Self::PayloadEncoding),
+            "scheme" => Ok(Self::Scheme),
             "threshold" => Ok(Self::Threshold),
             "limit" => Ok(Self::Limit),
             "share-identifier" => Ok(Self::ShareIdentifier),
