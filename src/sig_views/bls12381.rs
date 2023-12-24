@@ -3,7 +3,9 @@ use crate::{
     AttrId, AttrView, Builder, Error, Multisig, SigConvView, SigDataView, SigViews,
     ThresholdAttrView, ThresholdView,
 };
-use blsful::{vsss_rs::Share, Bls12381G1Impl, Bls12381G2Impl, Signature, SignatureShare};
+use blsful::{
+    vsss_rs::Share, Bls12381G1Impl, Bls12381G2Impl, Signature, SignatureSchemes, SignatureShare,
+};
 use multicodec::Codec;
 use multitrait::{EncodeInto, TryDecodeFrom};
 use multiutil::{Varbytes, Varuint};
@@ -62,6 +64,29 @@ impl TryFrom<u8> for SchemeTypeId {
             1 => Ok(Self::MessageAugmentation),
             2 => Ok(Self::ProofOfPossession),
             _ => Err(SharesError::InvalidSchemeTypeId(c).into()),
+        }
+    }
+}
+
+impl From<&SignatureSchemes> for SchemeTypeId {
+    fn from(s: &SignatureSchemes) -> Self {
+        match s {
+            SignatureSchemes::Basic => SchemeTypeId::Basic,
+            SignatureSchemes::MessageAugmentation => SchemeTypeId::MessageAugmentation,
+            SignatureSchemes::ProofOfPossession => SchemeTypeId::ProofOfPossession,
+        }
+    }
+}
+
+impl<C> From<&SignatureShare<C>> for SchemeTypeId
+where
+    C: blsful::BlsSignatureImpl,
+{
+    fn from(s: &SignatureShare<C>) -> Self {
+        match s {
+            SignatureShare::Basic(_) => SchemeTypeId::Basic,
+            SignatureShare::MessageAugmentation(_) => SchemeTypeId::MessageAugmentation,
+            SignatureShare::ProofOfPossession(_) => SchemeTypeId::ProofOfPossession,
         }
     }
 }

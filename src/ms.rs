@@ -1,6 +1,9 @@
 use crate::{
     error::AttributesError,
-    sig_views::{bls12381, ed25519, secp256k1},
+    sig_views::{
+        bls12381::{self, SchemeTypeId},
+        ed25519, secp256k1,
+    },
     AttrId, AttrView, Error, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
 };
 use blsful::{vsss_rs::Share, SignatureShare};
@@ -324,11 +327,7 @@ impl Builder {
     where
         C: blsful::BlsSignatureImpl,
     {
-        let scheme_type_id = match sigshare {
-            SignatureShare::Basic(_) => bls12381::SchemeTypeId::Basic,
-            SignatureShare::MessageAugmentation(_) => bls12381::SchemeTypeId::MessageAugmentation,
-            SignatureShare::ProofOfPossession(_) => bls12381::SchemeTypeId::ProofOfPossession,
-        };
+        let scheme_type_id = SchemeTypeId::from(sigshare);
         let sigshare = sigshare.as_raw_value();
         let identifier = sigshare.identifier();
         let value = sigshare.value().to_vec();
