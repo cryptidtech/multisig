@@ -88,6 +88,19 @@ impl From<&SignatureSchemes> for SchemeTypeId {
     }
 }
 
+impl<C> From<&Signature<C>> for SchemeTypeId
+where
+    C: blsful::BlsSignatureImpl,
+{
+    fn from(s: &Signature<C>) -> Self {
+        match s {
+            Signature::Basic(_) => SchemeTypeId::Basic,
+            Signature::MessageAugmentation(_) => SchemeTypeId::MessageAugmentation,
+            Signature::ProofOfPossession(_) => SchemeTypeId::ProofOfPossession,
+        }
+    }
+}
+
 impl<C> From<&SignatureShare<C>> for SchemeTypeId
 where
     C: blsful::BlsSignatureImpl,
