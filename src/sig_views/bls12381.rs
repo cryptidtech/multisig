@@ -68,6 +68,16 @@ impl TryFrom<u8> for SchemeTypeId {
     }
 }
 
+impl Into<SignatureSchemes> for SchemeTypeId {
+    fn into(self) -> SignatureSchemes {
+        match self {
+            SchemeTypeId::Basic => SignatureSchemes::Basic,
+            SchemeTypeId::MessageAugmentation => SignatureSchemes::MessageAugmentation,
+            SchemeTypeId::ProofOfPossession => SignatureSchemes::ProofOfPossession,
+        }
+    }
+}
+
 impl From<&SignatureSchemes> for SchemeTypeId {
     fn from(s: &SignatureSchemes) -> Self {
         match s {

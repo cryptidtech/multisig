@@ -1,6 +1,6 @@
 [package]
 name = "multisig"
-version = "0.2.8"
+version = "0.2.9"
 edition = "2021"
 authors = ["Dave Huseby <dwh@linuxprogrammer.org>"]
 description = "Multisig self-describing multicodec implementation for digital signatures"
