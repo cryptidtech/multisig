@@ -6,8 +6,7 @@ use crate::{
     },
     AttrId, AttrView, Error, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
 };
-use blsful::{vsss_rs::Share, SignatureShare};
-use elliptic_curve::group::GroupEncoding;
+use blsful::{vsss_rs::Share, Signature, SignatureShare};
 use multibase::Base;
 use multicodec::Codec;
 use multitrait::TryDecodeFrom;
@@ -294,15 +293,16 @@ impl Builder {
     }
 
     /// create a new builder from a Bls Signature
-    pub fn new_from_bls_signature<C>(sig: &blsful::Signature<C>) -> Result<Self, Error>
+    pub fn new_from_bls_signature<C>(sig: &Signature<C>) -> Result<Self, Error>
     where
         C: blsful::BlsSignatureImpl,
     {
-        let signature = sig.as_raw_value();
-        let sig_bytes = signature.to_bytes().as_ref().to_vec();
+        let scheme_type_id = SchemeTypeId::from(sig);
+        let sig_bytes: Vec<u8> = sig.into();
+        println!("sig size: {}", sig_bytes.len());
         let codec = match sig_bytes.len() {
-            48 => Codec::Bls12381G1Sig,
-            96 => Codec::Bls12381G2Sig,
+            48 => Codec::Bls12381G1Sig, // G1Projective::to_compressed()
+            96 => Codec::Bls12381G2Sig, // G2Projective::to_compressed()
             _ => {
                 return Err(Error::UnsupportedAlgorithm(
                     "invalid Bls signature size".to_string(),
@@ -311,6 +311,7 @@ impl Builder {
         };
         let mut attributes = BTreeMap::new();
         attributes.insert(AttrId::SigData, sig_bytes);
+        attributes.insert(AttrId::Scheme, scheme_type_id.into());
         Ok(Self {
             codec,
             attributes: Some(attributes),
