@@ -6,7 +6,7 @@ use crate::{
     },
     AttrId, AttrView, Error, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
 };
-use blsful::{vsss_rs::Share, Signature, SignatureShare};
+use blsful::{inner_types::GroupEncoding, vsss_rs::Share, Signature, SignatureShare};
 use multibase::Base;
 use multicodec::Codec;
 use multitrait::TryDecodeFrom;
@@ -298,8 +298,7 @@ impl Builder {
         C: blsful::BlsSignatureImpl,
     {
         let scheme_type_id = SchemeTypeId::from(sig);
-        let sig_bytes: Vec<u8> = sig.into();
-        println!("sig size: {}", sig_bytes.len());
+        let sig_bytes: Vec<u8> = sig.as_raw_value().to_bytes().as_ref().to_vec();
         let codec = match sig_bytes.len() {
             48 => Codec::Bls12381G1Sig, // G1Projective::to_compressed()
             96 => Codec::Bls12381G2Sig, // G2Projective::to_compressed()
