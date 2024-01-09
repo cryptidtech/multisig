@@ -29,7 +29,7 @@ mod tests {
                 // attributes
                 Token::Seq { len: Some(1) },
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 0]),
+                Token::U8(0),
                 Token::BorrowedBytes(&[
                     64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -129,7 +129,7 @@ mod tests {
                 // attributes
                 Token::Seq { len: Some(1) },
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 0]),
+                Token::U8(0),
                 Token::BorrowedBytes(&[
                     64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -230,7 +230,7 @@ mod tests {
                 // attributes
                 Token::Seq { len: Some(1) },
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 0]),
+                Token::U8(0),
                 Token::BorrowedBytes(&[
                     48, 131, 80, 79, 128, 66, 53, 106, 134, 11, 109, 184, 199, 221, 203, 122, 204,
                     86, 59, 83, 198, 44, 228, 249, 121, 174, 119, 169, 182, 125, 114, 117, 204, 62,
@@ -335,7 +335,7 @@ mod tests {
                 Token::Seq { len: Some(5) },
                 // SigData
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 0]),
+                Token::U8(0),
                 Token::BorrowedBytes(&[
                     48, 132, 37, 89, 85, 174, 55, 19, 253, 195, 108, 166, 17, 225, 31, 189, 207,
                     240, 10, 195, 172, 73, 100, 164, 43, 130, 83, 32, 104, 100, 100, 8, 221, 183,
@@ -344,22 +344,22 @@ mod tests {
                 Token::TupleEnd,
                 // threshold
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 2]),
+                Token::U8(2),
                 Token::BorrowedBytes(&[1, 3]),
                 Token::TupleEnd,
                 // limit
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 3]),
+                Token::U8(3),
                 Token::BorrowedBytes(&[1, 4]),
                 Token::TupleEnd,
                 // share identifier
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 4]),
+                Token::U8(4),
                 Token::BorrowedBytes(&[1, 1]),
                 Token::TupleEnd,
                 // threshold data: share type id
                 Token::Tuple { len: 2 },
-                Token::BorrowedBytes(&[1, 5]),
+                Token::U8(5),
                 Token::BorrowedBytes(&[1, 2]),
                 Token::TupleEnd,
                 Token::SeqEnd,
