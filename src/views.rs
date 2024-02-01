@@ -22,13 +22,13 @@ pub trait AttrView {
 }
 
 /// trait for returning the data from a Multisig
-pub trait SigDataView {
+pub trait DataView {
     /// get the signature bytes from the Multisig
     fn sig_bytes(&self) -> Result<Vec<u8>, Error>;
 }
 
 /// trait for converting Multisigs to other formats
-pub trait SigConvView {
+pub trait ConvView {
     /// convert the Multisig to an SSH signature
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error>;
 }
@@ -56,13 +56,13 @@ pub trait ThresholdView {
 }
 
 /// trait for getting the other views
-pub trait SigViews {
+pub trait Views {
     /// Provide a read-only view to access the signature attributes
     fn attr_view<'a>(&'a self) -> Result<Box<dyn AttrView + 'a>, Error>;
     /// Provide a read-only view to access signature data
-    fn sig_data_view<'a>(&'a self) -> Result<Box<dyn SigDataView + 'a>, Error>;
+    fn data_view<'a>(&'a self) -> Result<Box<dyn DataView + 'a>, Error>;
     /// Provide a view for converting to other signature formats
-    fn sig_conv_view<'a>(&'a self) -> Result<Box<dyn SigConvView + 'a>, Error>;
+    fn conv_view<'a>(&'a self) -> Result<Box<dyn ConvView + 'a>, Error>;
     /// Provide a read-only view to access the threshold signature attributes
     fn threshold_attr_view<'a>(&'a self) -> Result<Box<dyn ThresholdAttrView + 'a>, Error>;
     /// Provide the view for adding a share to a multisig

@@ -1,10 +1,10 @@
 use crate::{
     error::AttributesError,
-    sig_views::{
+    views::{
         bls12381::{self, SchemeTypeId},
         ed25519, secp256k1,
     },
-    AttrId, AttrView, Error, SigConvView, SigDataView, SigViews, ThresholdAttrView, ThresholdView,
+    AttrId, AttrView, ConvView, DataView, Error, ThresholdAttrView, ThresholdView, Views,
 };
 use blsful::{inner_types::GroupEncoding, vsss_rs::Share, Signature, SignatureShare};
 use multibase::Base;
@@ -145,7 +145,7 @@ impl fmt::Debug for Multisig {
     }
 }
 
-impl SigViews for Multisig {
+impl Views for Multisig {
     /// Provide a read-only view to access the signature attributes
     fn attr_view<'a>(&'a self) -> Result<Box<dyn AttrView + 'a>, Error> {
         match self.codec {
@@ -159,7 +159,7 @@ impl SigViews for Multisig {
         }
     }
     /// Provide a read-only view to access signature data
-    fn sig_data_view<'a>(&'a self) -> Result<Box<dyn SigDataView + 'a>, Error> {
+    fn data_view<'a>(&'a self) -> Result<Box<dyn DataView + 'a>, Error> {
         match self.codec {
             Codec::Bls12381G1Sig
             | Codec::Bls12381G2Sig
@@ -171,7 +171,7 @@ impl SigViews for Multisig {
         }
     }
     /// Provide a read-only view to access signature data
-    fn sig_conv_view<'a>(&'a self) -> Result<Box<dyn SigConvView + 'a>, Error> {
+    fn conv_view<'a>(&'a self) -> Result<Box<dyn ConvView + 'a>, Error> {
         match self.codec {
             Codec::Bls12381G1Sig
             | Codec::Bls12381G2Sig
@@ -245,7 +245,9 @@ impl Builder {
                     })
                 }
                 bls12381::ALGORITHM_NAME_G1 => {
-                    attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
+                    let sig_combined = bls12381::SigCombined::try_from(sig.as_bytes())?;
+                    attributes.insert(AttrId::Scheme, sig_combined.0.into());
+                    attributes.insert(AttrId::SigData, sig_combined.1);
                     Ok(Self {
                         codec: Codec::Bls12381G1Sig,
                         attributes: Some(attributes),
@@ -253,7 +255,9 @@ impl Builder {
                     })
                 }
                 bls12381::ALGORITHM_NAME_G2 => {
-                    attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
+                    let sig_combined = bls12381::SigCombined::try_from(sig.as_bytes())?;
+                    attributes.insert(AttrId::Scheme, sig_combined.0.into());
+                    attributes.insert(AttrId::SigData, sig_combined.1);
                     Ok(Self {
                         codec: Codec::Bls12381G2Sig,
                         attributes: Some(attributes),
@@ -569,7 +573,7 @@ mod tests {
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
-        let cv = ms1.sig_conv_view().unwrap();
+        let cv = ms1.conv_view().unwrap();
         let ms_ssh = cv.to_ssh_signature().unwrap();
         let ms2 = Builder::new_from_ssh_signature(&ms_ssh)
             .unwrap()
@@ -579,13 +583,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_es256k_ssh_roundtrip() {
         let ms1 = Builder::new(Codec::Es256K)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
-        let cv = ms1.sig_conv_view().unwrap();
+        let cv = ms1.conv_view().unwrap();
         let ms_ssh = cv.to_ssh_signature().unwrap();
         let ms2 = Builder::new_from_ssh_signature(&ms_ssh)
             .unwrap()
@@ -595,7 +598,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_bls_signature_ssh_roundtrip() {
         let sk = blsful::Bls12381G1::new_secret_key();
         let sig = sk
@@ -610,7 +612,7 @@ mod tests {
             .try_build()
             .unwrap();
 
-        let cv = ms1.sig_conv_view().unwrap();
+        let cv = ms1.conv_view().unwrap();
         let ssh_ms = cv.to_ssh_signature().unwrap();
 
         let ms2 = Builder::new_from_ssh_signature(&ssh_ms)
@@ -622,7 +624,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_bls_signature_combine_ssh_roundtrip() {
         let sk = blsful::Bls12381G2::new_secret_key();
         let sig = sk
@@ -652,7 +653,7 @@ mod tests {
                     .unwrap()
                     .try_build()
                     .unwrap();
-                let sc = ms.sig_conv_view().unwrap();
+                let sc = ms.conv_view().unwrap();
                 sc.to_ssh_signature().unwrap()
             });
         });

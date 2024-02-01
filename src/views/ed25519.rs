@@ -1,6 +1,6 @@
 use crate::{
     error::{AttributesError, ConversionsError},
-    AttrId, AttrView, Error, Multisig, SigConvView, SigDataView, SigViews,
+    AttrId, AttrView, ConvView, DataView, Error, Multisig, Views,
 };
 use multicodec::Codec;
 
@@ -34,7 +34,7 @@ impl<'a> AttrView for View<'a> {
     }
 }
 
-impl<'a> SigDataView for View<'a> {
+impl<'a> DataView for View<'a> {
     /// For EdDSA Multisig values, the sig data is stored using the
     /// AttrId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
@@ -47,11 +47,11 @@ impl<'a> SigDataView for View<'a> {
     }
 }
 
-impl<'a> SigConvView for View<'a> {
+impl<'a> ConvView for View<'a> {
     /// convert to SSH signature format
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
-        let dv = self.ms.sig_data_view()?;
+        let dv = self.ms.data_view()?;
         let sig_bytes = dv.sig_bytes()?;
         Ok(
             ssh_key::Signature::new(ssh_key::Algorithm::Ed25519, sig_bytes)

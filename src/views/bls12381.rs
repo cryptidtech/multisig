@@ -1,7 +1,7 @@
 use crate::{
     error::{AttributesError, ConversionsError, SharesError},
-    AttrId, AttrView, Builder, Error, Multisig, SigConvView, SigDataView, SigViews,
-    ThresholdAttrView, ThresholdView,
+    AttrId, AttrView, Builder, ConvView, DataView, Error, Multisig, ThresholdAttrView,
+    ThresholdView, Views,
 };
 use blsful::{
     vsss_rs::Share, Bls12381G1Impl, Bls12381G2Impl, Signature, SignatureSchemes, SignatureShare,
@@ -154,6 +154,47 @@ impl TryFrom<&str> for SchemeTypeId {
 impl fmt::Display for SchemeTypeId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+/// tuple of combined signature data
+#[derive(Clone)]
+pub struct SigCombined(
+    /// signature scheme
+    pub SchemeTypeId,
+    /// signature bytes
+    pub Vec<u8>,
+);
+
+impl Into<Vec<u8>> for SigCombined {
+    fn into(self) -> Vec<u8> {
+        let mut v = Vec::default();
+        // add in the signature type id
+        v.append(&mut self.0.into());
+        // add in the signature bytes
+        v.append(&mut Varbytes(self.1.clone()).into());
+        v
+    }
+}
+
+impl<'a> TryFrom<&'a [u8]> for SigCombined {
+    type Error = Error;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
+        let (sig, _) = Self::try_decode_from(bytes)?;
+        Ok(sig)
+    }
+}
+
+impl<'a> TryDecodeFrom<'a> for SigCombined {
+    type Error = Error;
+
+    fn try_decode_from(bytes: &'a [u8]) -> Result<(Self, &'a [u8]), Self::Error> {
+        // try to decode the signature type
+        let (sig_type, ptr) = SchemeTypeId::try_decode_from(bytes)?;
+        // try to decode the signature bytes
+        let (sig_data, ptr) = Varbytes::try_decode_from(ptr)?;
+        Ok((Self(sig_type, sig_data.to_inner()), ptr))
     }
 }
 
@@ -312,7 +353,7 @@ impl<'a> AttrView for View<'a> {
     }
 }
 
-impl<'a> SigDataView for View<'a> {
+impl<'a> DataView for View<'a> {
     /// For Bls Multisig values, the sig data is stored using the
     /// SchemeTypeId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
@@ -325,11 +366,11 @@ impl<'a> SigDataView for View<'a> {
     }
 }
 
-impl<'a> SigConvView for View<'a> {
+impl<'a> ConvView for View<'a> {
     /// convert to SSH signature format
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
-        let dv = self.ms.sig_data_view()?;
+        let dv = self.ms.data_view()?;
         let sig_bytes = dv.sig_bytes()?;
 
         // get the scheme
@@ -337,22 +378,32 @@ impl<'a> SigConvView for View<'a> {
         let scheme_type = SchemeTypeId::try_from(av.scheme()?)?;
 
         match self.ms.codec {
-            Codec::Bls12381G1Sig => Ok(ssh_key::Signature::new(
-                ssh_key::Algorithm::Other(
-                    ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1)
-                        .map_err(|e| ConversionsError::SshSigLabel(e))?,
-                ),
-                sig_bytes,
-            )
-            .map_err(|e| ConversionsError::SshSig(e))?),
-            Codec::Bls12381G2Sig => Ok(ssh_key::Signature::new(
-                ssh_key::Algorithm::Other(
-                    ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2)
-                        .map_err(|e| ConversionsError::SshSigLabel(e))?,
-                ),
-                sig_bytes,
-            )
-            .map_err(|e| ConversionsError::SshSig(e))?),
+            Codec::Bls12381G1Sig => {
+                // create the combined sig tuple
+                let sig_data: Vec<u8> = SigCombined(scheme_type, sig_bytes).into();
+
+                Ok(ssh_key::Signature::new(
+                    ssh_key::Algorithm::Other(
+                        ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1)
+                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                    ),
+                    sig_data,
+                )
+                .map_err(|e| ConversionsError::SshSig(e))?)
+            }
+            Codec::Bls12381G2Sig => {
+                // create the combined sig tuple
+                let sig_data: Vec<u8> = SigCombined(scheme_type, sig_bytes).into();
+
+                Ok(ssh_key::Signature::new(
+                    ssh_key::Algorithm::Other(
+                        ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2)
+                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                    ),
+                    sig_data,
+                )
+                .map_err(|e| ConversionsError::SshSig(e))?)
+            }
             Codec::Bls12381G1SigShare => {
                 // get the threshold attributes
                 let av = self.ms.threshold_attr_view()?;
@@ -517,7 +568,7 @@ impl<'a> ThresholdView for View<'a> {
             let identifier = av.identifier()?;
 
             // get the share's signature data
-            let dv = share.sig_data_view()?;
+            let dv = share.data_view()?;
             let sig_bytes = dv.sig_bytes()?;
 
             let encoding = {
