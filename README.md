@@ -1,9 +1,10 @@
 # Multisig
 
 [![](https://img.shields.io/badge/made%20by-Cryptid%20Technologies-gold.svg?style=flat-square)][0]
-[![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)][1]
+[![](https://img.shields.io/badge/project-provenance-purple.svg?style=flat-square)][1]
+[![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)][2]
 
-A Rust implementation of the [multiformats][1] [multisig specification][2].
+A Rust implementation of the [multiformats][2] [multisig specification][3].
 
 ## Current Status 
 
@@ -16,14 +17,14 @@ It currently supports the following digital signature protocols.
 The BLS curve implementation also supports threshold signatures.
 
 This crate also supports converting to/from SSH format digital signatures using
-the [`ssh-key`][3] crate. This gives full OpenSSH compatibility for reading in
-OpenSSH serialized keys and converting them to Multikey format. This even
-includes non-standard SSH key protocols such as Es256K and Bls12-381 signatures
-through the use of [RFC 4251][4] standard for "additional algorithms" names
-using the "@multisig" domain suffix. For instance, using this crate, an Es256K
-Multisig converted to an SSH format signature has the name
-"secp256k1@multisig". A BLS12-381 G1 signature share converted to SSH format
-has the name "bls12_381-g1-share@multsig".
+the [`ssh-key`][4] crate. This gives full OpenSSH compatibility for reading in
+OpenSSH serialized signatures and converting them to Multisig format. This even
+includes non-standard SSH key protocols such as Es256K and BBLS12-381 G1/G2
+signatures through the use of [RFC 4251][5] standard for "additional
+algorithms" names using the "@multisig" domain suffix. For instance, using this
+crate, an Es256K Multisig converted to an SSH format signature has the
+algorithm name "secp256k1@multisig". A BLS12-381 G1 signature share converted
+to SSH format has the algorithm name "bls12_381-g1-share@multsig".
 
 ## Introduction
 
@@ -42,7 +43,7 @@ needed.
 The only operations that can be executed on a Multisig object are those that
 return the attribute data and the threshold signature operations for
 accumulating and combining signature shares. Any operation that involves a
-cryptographic key (e.g. signing, verifying) is found in the [`Multikey`][5]
+cryptographic key (e.g. signing, verifying) is found in the [`Multikey`][6]
 companion crate.
 
 ## Views on the Multisig Data
@@ -80,10 +81,10 @@ for share in &shares {
 
 ### What about Varsig?
 
-There already exists a multicodec format called Varsig but it has some serious
-deficiencies in design. Here is the Varsig ["spec"][6]. The greatest failing of
-Varsig is that it fails to meet [the requirements][7] for all Multicodec data
-types:
+There already exists a multicodec signature format called Varsig but it has
+some serious deficiencies in design. Here is the Varsig ["spec"][7]. The
+greatest failing of Varsig is that it fails to meet [the requirements][8] for
+all Multicodec data types:
 
 * They MUST be in-band (with the value); not out-of-band (in context).
 * They MUST avoid lock-in and promote extensibility.
@@ -125,14 +126,15 @@ recognize the key codec. Since there are no counts or lengths encoded in the
 Varsig data, it is impossible to know the full length of any Varsig without
 having complete support for every key codec. Multisig format seeks to fix that
 by adding counts for the variable number of varuints and a length to the
-variable number of octets (i.e. [`Varbytes`][8]).
+variable number of octets (i.e. [`Varbytes`][9]).
 
 [0]: https://cryptid.tech
-[1]: https://github.com/multiformats/multiformats
-[2]: https://github.com/cryptidtech/provenance-specifications/blob/main/specifications/multisig.md
-[3]: https://crates.io/crates/ssh-key
-[4]: https://www.rfc-editor.org/rfc/rfc4251.html#page-11
-[5]: https://github.com/cryptidtech/multikey.git
-[6]: https://github.com/ChainAgnostic/varsig
-[7]: https://multiformats.io/#what-are-multiformats
-[8]: https://github.com/cryptidtech/multiutil/blob/main/src/varbytes.rs
+[1]: https://github.com/cryptidtech/provenance-specifications/
+[2]: https://github.com/multiformats/multiformats
+[3]: https://github.com/cryptidtech/provenance-specifications/blob/main/specifications/multisig.md
+[4]: https://crates.io/crates/ssh-key
+[5]: https://www.rfc-editor.org/rfc/rfc4251.html#page-11
+[6]: https://github.com/cryptidtech/multikey.git
+[7]: https://github.com/ChainAgnostic/varsig
+[8]: https://multiformats.io/#what-are-multiformats
+[9]: https://github.com/cryptidtech/multiutil/blob/main/src/varbytes.rs
