@@ -13,7 +13,7 @@ It currently supports the following digital signature protocols.
 * Es256K (secp256k1)
 * BLS12-381 G1/G2
 
-The BLS curve implementation also support threshold signatures.
+The BLS curve implementation also supports threshold signatures.
 
 This crate also supports converting to/from SSH format digital signatures using
 the [`ssh-key`][3] crate. This gives full OpenSSH compatibility for reading in
