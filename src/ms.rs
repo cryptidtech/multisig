@@ -303,6 +303,7 @@ impl Builder {
     {
         let scheme_type_id = SchemeTypeId::from(sig);
         let sig_bytes: Vec<u8> = sig.as_raw_value().to_bytes().as_ref().to_vec();
+        println!("signature length: {}", sig_bytes.len());
         let codec = match sig_bytes.len() {
             48 => Codec::Bls12381G1Sig, // G1Projective::to_compressed()
             96 => Codec::Bls12381G2Sig, // G2Projective::to_compressed()
@@ -334,7 +335,8 @@ impl Builder {
         let scheme_type_id = SchemeTypeId::from(sigshare);
         let sigshare = sigshare.as_raw_value();
         let identifier = sigshare.identifier();
-        let value = sigshare.value().to_vec();
+        let value = sigshare.value_vec();
+        println!("sigshare len: {}", value.len());
         let codec = match value.len() {
             48 => Codec::Bls12381G1SigShare, // large pubkeys, small signatures
             96 => Codec::Bls12381G2SigShare, // small pubkeys, large signatures
