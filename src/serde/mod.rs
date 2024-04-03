@@ -7,6 +7,7 @@ mod tests {
     use crate::{Builder, EncodedMultisig, Multisig};
     use multibase::Base;
     use multicodec::Codec;
+    use multitrait::Null;
     use serde_test::{assert_tokens, Configure, Token};
 
     #[test]
@@ -393,10 +394,7 @@ mod tests {
         assert_tokens(
             &ms.readable(),
             &[
-                Token::Struct {
-                    name: "multisig",
-                    len: 3,
-                },
+                Token::Struct { name: "multisig", len: 3, },
                 Token::BorrowedStr("codec"),
                 Token::BorrowedStr("bls12_381-g1-sig-share"),
                 Token::BorrowedStr("message"),
@@ -453,5 +451,52 @@ mod tests {
         let v = serde_cbor::to_vec(&ms1).unwrap();
         let ms2: Multisig = serde_cbor::from_slice(v.as_slice()).unwrap();
         assert_eq!(ms1, ms2);
+    }
+
+    #[test]
+    fn test_null_multisig_serde_compact() {
+        let ms = Multisig::null();
+        assert_tokens(
+            &ms.compact(),
+            &[
+                Token::Tuple { len: 4, },
+                Token::BorrowedBytes(&[0x39]),
+                Token::BorrowedBytes(&[0x0]),
+                Token::BorrowedBytes(&[0x0]),
+                Token::Seq { len: Some(0) },
+                Token::SeqEnd,
+                Token::TupleEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_null_multisig_serde_readable() {
+        let ms = Multisig::null();
+        assert_tokens(
+            &ms.readable(),
+            &[
+                Token::Struct { name: "multisig", len: 3, },
+                Token::BorrowedStr("codec"),
+                Token::BorrowedStr("identity"),
+                Token::BorrowedStr("message"),
+                Token::BorrowedStr("f00"),
+                Token::BorrowedStr("attributes"),
+                Token::Seq { len: Some(0) },
+                Token::SeqEnd,
+                Token::StructEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_encoded_null_multisig_serde_readable() {
+        let ms: EncodedMultisig = Multisig::null().into();
+        assert_tokens(
+            &ms.readable(),
+            &[
+                Token::BorrowedStr("f39000000"),
+            ],
+        );
     }
 }

@@ -9,7 +9,7 @@ use crate::{
 use blsful::{inner_types::GroupEncoding, vsss_rs::Share, Signature, SignatureShare};
 use multibase::Base;
 use multicodec::Codec;
-use multitrait::TryDecodeFrom;
+use multitrait::{Null, TryDecodeFrom};
 use multiutil::{BaseEncoded, CodecInfo, EncodingInfo, Varbytes, Varuint};
 use std::{collections::BTreeMap, fmt};
 
@@ -23,7 +23,7 @@ pub type EncodedMultisig = BaseEncoded<Multisig>;
 pub type Attributes = BTreeMap<AttrId, Vec<u8>>;
 
 /// The multisig structure
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct Multisig {
     /// signature codec
     pub(crate) codec: Codec,
@@ -126,6 +126,16 @@ impl<'a> TryDecodeFrom<'a> for Multisig {
             },
             ptr,
         ))
+    }
+}
+
+impl Null for Multisig {
+    fn null() -> Self {
+        Self::default()
+    }
+
+    fn is_null(&self) -> bool {
+        *self == Self::null()
     }
 }
 
@@ -679,5 +689,14 @@ mod tests {
         let ms3 = tv.combine().unwrap();
 
         assert_eq!(ms1, ms3);
+    }
+
+    #[test]
+    fn test_null() {
+        let ms1 = Multisig::null();
+        assert!(ms1.is_null());
+        let ms2 = Multisig::default();
+        assert_eq!(ms1, ms2);
+        assert!(ms2.is_null());
     }
 }

@@ -1,8 +1,8 @@
 [package]
 name = "multisig"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
-authors = ["Dave Huseby <dwh@linuxprogrammer.org>"]
+authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 description = "Multisig self-describing multicodec implementation for digital signatures"
 repository = "https://github.com/cryptidtech/multisig.git"
 readme = "README.md"
