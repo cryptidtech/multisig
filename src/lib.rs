@@ -18,7 +18,7 @@ pub use attrid::AttrId;
 
 /// Multisig implementation
 pub mod ms;
-pub use ms::{Builder, EncodedMultisig, Multisig};
+pub use ms::{SIG_CODECS, SIG_SHARE_CODECS, Builder, EncodedMultisig, Multisig};
 
 /// Views on the multisig
 pub mod views;

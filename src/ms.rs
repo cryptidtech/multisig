@@ -14,6 +14,18 @@ use multitrait::{Null, TryDecodeFrom};
 use multiutil::{BaseEncoded, CodecInfo, EncodingInfo, Varbytes, Varuint};
 use std::{collections::BTreeMap, fmt};
 
+/// the list of signature codecs currently supported
+pub const SIG_CODECS: [Codec; 4] = [
+    Codec::Bls12381G1Sig,
+    Codec::Bls12381G2Sig,
+    Codec::Eddsa,
+    Codec::Es256K];
+
+/// the list of signature share codecs supported
+pub const SIG_SHARE_CODECS: [Codec; 2] = [
+    Codec::Bls12381G1SigShare,
+    Codec::Bls12381G2SigShare];
+
 /// the multisig sigil
 pub const SIGIL: Codec = Codec::Multisig;
 
@@ -472,12 +484,14 @@ mod tests {
 
     #[test]
     fn test_encoded() {
-        let ms = Builder::new(Codec::Eddsa)
-            .with_signature_bytes(&[0u8; 64])
-            .try_build_encoded()
-            .unwrap();
-        let s = ms.to_string();
-        assert_eq!(ms, EncodedMultisig::try_from(s.as_str()).unwrap());
+        for codec in SIG_CODECS {
+            let ms = Builder::new(codec)
+                .with_signature_bytes(&[0u8; 64])
+                .try_build_encoded()
+                .unwrap();
+            let s = ms.to_string();
+            assert_eq!(ms, EncodedMultisig::try_from(s.as_str()).unwrap());
+        }
     }
 
     #[test]
