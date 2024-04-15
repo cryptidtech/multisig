@@ -5,7 +5,7 @@ use crate::{
 };
 use core::fmt;
 use multicodec::Codec;
-use multiutil::{EncodedVarbytes, Varbytes};
+use multiutil::EncodedVarbytes;
 use serde::{
     de::{Error, MapAccess, Visitor},
     Deserialize, Deserializer,
@@ -143,29 +143,8 @@ impl<'de> Deserialize<'de> for Multisig {
         if deserializer.is_human_readable() {
             deserializer.deserialize_struct(ms::SIGIL.as_str(), FIELDS, MultisigVisitor)
         } else {
-            let (sigil, codec, message, attr): (Codec, Codec, Varbytes, Vec<(AttrId, Varbytes)>) =
-                Deserialize::deserialize(deserializer)?;
-
-            if sigil != ms::SIGIL {
-                return Err(Error::custom("deserialized sigil is not a Multisig sigil"));
-            }
-            let message = message.to_inner();
-            let mut attributes = Attributes::new();
-            attr.iter()
-                .try_for_each(|(id, attr)| -> Result<(), D::Error> {
-                    let i = *id;
-                    let a: Vec<u8> = attr.clone().to_inner();
-                    if attributes.insert(i, a).is_some() {
-                        return Err(Error::duplicate_field("duplicate attribute id"));
-                    }
-                    Ok(())
-                })?;
-
-            Ok(Self {
-                codec,
-                message,
-                attributes,
-            })
+            let b: &'de [u8] = Deserialize::deserialize(deserializer)?;
+            Ok(Self::try_from(b).map_err(|e| Error::custom(e.to_string()))?)
         }
     }
 }

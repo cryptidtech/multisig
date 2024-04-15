@@ -42,14 +42,8 @@ impl ser::Serialize for Multisig {
             ss.serialize_field("attributes", &attributes)?;
             ss.end()
         } else {
-            let attributes: Vec<(AttrId, Varbytes)> = self
-                .attributes
-                .iter()
-                .map(|(id, attr)| (*id, Varbytes(attr.clone())))
-                .collect();
-            let message = Varbytes(self.message.clone());
-
-            (ms::SIGIL, self.codec, message, attributes).serialize(serializer)
+            let v: Vec<u8> = self.clone().into();
+            serializer.serialize_bytes(v.as_slice())
         }
     }
 }

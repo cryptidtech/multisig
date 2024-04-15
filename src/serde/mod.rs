@@ -21,25 +21,20 @@ mod tests {
         assert_tokens(
             &ms.compact(),
             &[
-                Token::Tuple { len: 4 },
-                // sigil
-                Token::BorrowedBytes(&[57]),
-                // codec
-                Token::BorrowedBytes(&[237, 161, 3]),
-                // message
-                Token::BorrowedBytes(&[0]),
-                // attributes
-                Token::Seq { len: Some(1) },
-                Token::Tuple { len: 2 },
-                Token::U8(0),
                 Token::BorrowedBytes(&[
-                    64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ]),
-                Token::TupleEnd,
-                Token::SeqEnd,
-                Token::TupleEnd,
+                    0x39,
+                    0xed, 0xa1, 0x03,
+                    0x00,
+                    0x01,
+                    0x00, 0x40,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
             ],
         )
     }
@@ -121,25 +116,21 @@ mod tests {
         assert_tokens(
             &ms.compact(),
             &[
-                Token::Tuple { len: 4 },
-                // sigil
-                Token::BorrowedBytes(&[57]),
-                // codec
-                Token::BorrowedBytes(&[231, 161, 3]),
-                // message
-                Token::BorrowedBytes(&[0]),
-                // attributes
-                Token::Seq { len: Some(1) },
-                Token::Tuple { len: 2 },
-                Token::U8(0),
                 Token::BorrowedBytes(&[
-                    64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ]),
-                Token::TupleEnd,
-                Token::SeqEnd,
-                Token::TupleEnd,
+                    0x39,
+                    0xe7, 0xa1, 0x03,
+                    0x00,
+                    0x01,
+                    0x00, 0x40,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                ])
             ],
         )
     }
@@ -222,25 +213,20 @@ mod tests {
         assert_tokens(
             &ms.compact(),
             &[
-                Token::Tuple { len: 4 },
-                // sigil
-                Token::BorrowedBytes(&[57]),
-                // codec
-                Token::BorrowedBytes(&[234, 161, 3]),
-                // message
-                Token::BorrowedBytes(&[0]),
-                // attributes
-                Token::Seq { len: Some(1) },
-                Token::Tuple { len: 2 },
-                Token::U8(0),
                 Token::BorrowedBytes(&[
-                    48, 131, 80, 79, 128, 66, 53, 106, 134, 11, 109, 184, 199, 221, 203, 122, 204,
-                    86, 59, 83, 198, 44, 228, 249, 121, 174, 119, 169, 182, 125, 114, 117, 204, 62,
-                    1, 248, 219, 1, 213, 253, 187, 86, 61, 7, 176, 236, 45, 58, 121,
-                ]),
-                Token::TupleEnd,
-                Token::SeqEnd,
-                Token::TupleEnd,
+                    0x39,               // multisig sigil
+                    0xea, 0xa1, 0x03,   // signature codec
+                    0x00,               // message length
+                    0x01,               // number of attributes
+                    // SigData (48 in length)
+                    0x00, 0x30,
+                    0x83, 0x50, 0x4f, 0x80, 0x42, 0x35, 0x6a, 0x86,
+                    0x0b, 0x6d, 0xb8, 0xc7, 0xdd, 0xcb, 0x7a, 0xcc,
+                    0x56, 0x3b, 0x53, 0xc6, 0x2c, 0xe4, 0xf9, 0x79,
+                    0xae, 0x77, 0xa9, 0xb6, 0x7d, 0x72, 0x75, 0xcc,
+                    0x3e, 0x01, 0xf8, 0xdb, 0x01, 0xd5, 0xfd, 0xbb,
+                    0x56, 0x3d, 0x07, 0xb0, 0xec, 0x2d, 0x3a, 0x79
+                ])
             ],
         )
     }
@@ -323,49 +309,35 @@ mod tests {
 
         assert_eq!(Codec::Bls12381G1SigShare, ms.codec);
 
+        /*
+        let v: Vec<u8> = ms.clone().into();
+        print!("BLAH: ");
+        for b in &v {
+            print!("0x{:02x}, ", b);
+        }
+        println!("");
+        */
+
         assert_tokens(
             &ms.compact(),
             &[
-                Token::Tuple { len: 4 },
-                // sigil
-                Token::BorrowedBytes(&[57]),
-                // codec
-                Token::BorrowedBytes(&[250, 161, 3]),
-                // message
-                Token::BorrowedBytes(&[0]),
-                // attributes
-                Token::Seq { len: Some(5) },
-                // SigData
-                Token::Tuple { len: 2 },
-                Token::U8(0),
                 Token::BorrowedBytes(&[
-                    48, 132, 37, 89, 85, 174, 55, 19, 253, 195, 108, 166, 17, 225, 31, 189, 207,
-                    240, 10, 195, 172, 73, 100, 164, 43, 130, 83, 32, 104, 100, 100, 8, 221, 183,
-                    217, 213, 100, 101, 150, 75, 55, 222, 27, 251, 158, 10, 169, 216, 132,
-                ]),
-                Token::TupleEnd,
-                // threshold
-                Token::Tuple { len: 2 },
-                Token::U8(2),
-                Token::BorrowedBytes(&[1, 3]),
-                Token::TupleEnd,
-                // limit
-                Token::Tuple { len: 2 },
-                Token::U8(3),
-                Token::BorrowedBytes(&[1, 4]),
-                Token::TupleEnd,
-                // share identifier
-                Token::Tuple { len: 2 },
-                Token::U8(4),
-                Token::BorrowedBytes(&[1, 1]),
-                Token::TupleEnd,
-                // threshold data: share type id
-                Token::Tuple { len: 2 },
-                Token::U8(5),
-                Token::BorrowedBytes(&[1, 2]),
-                Token::TupleEnd,
-                Token::SeqEnd,
-                Token::TupleEnd,
+                    0x39,
+                    0xfa, 0xa1, 0x03,
+                    0x00,
+                    0x05,
+                    0x00, 0x30,
+                    0x84, 0x25, 0x59, 0x55, 0xae, 0x37, 0x13, 0xfd,
+                    0xc3, 0x6c, 0xa6, 0x11, 0xe1, 0x1f, 0xbd, 0xcf,
+                    0xf0, 0x0a, 0xc3, 0xac, 0x49, 0x64, 0xa4, 0x2b,
+                    0x82, 0x53, 0x20, 0x68, 0x64, 0x64, 0x08, 0xdd,
+                    0xb7, 0xd9, 0xd5, 0x64, 0x65, 0x96, 0x4b, 0x37,
+                    0xde, 0x1b, 0xfb, 0x9e, 0x0a, 0xa9, 0xd8, 0x84,
+                    0x02, 0x01, 0x03,
+                    0x03, 0x01, 0x04,
+                    0x04, 0x01, 0x01,
+                    0x05, 0x01, 0x02
+                ])
             ],
         )
     }
@@ -460,13 +432,12 @@ mod tests {
         assert_tokens(
             &ms.compact(),
             &[
-                Token::Tuple { len: 4, },
-                Token::BorrowedBytes(&[0x39]),
-                Token::BorrowedBytes(&[0x0]),
-                Token::BorrowedBytes(&[0x0]),
-                Token::Seq { len: Some(0) },
-                Token::SeqEnd,
-                Token::TupleEnd,
+                Token::BorrowedBytes(&[
+                    0x39, // Multisig
+                    0x00, // Codec::Identity
+                    0x00, // message (0 length)
+                    0x00  // number of attributes
+                ])
             ],
         );
     }
