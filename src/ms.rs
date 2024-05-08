@@ -16,15 +16,23 @@ use std::{collections::BTreeMap, fmt};
 
 /// the list of signature codecs currently supported
 pub const SIG_CODECS: [Codec; 4] = [
-    Codec::Bls12381G1Sig,
-    Codec::Bls12381G2Sig,
-    Codec::Eddsa,
-    Codec::Es256K];
+    Codec::Bls12381G1Msig,
+    Codec::Bls12381G2Msig,
+    Codec::EddsaMsig,
+    // Codec::Es256Msig,
+    // Codec::Es384Msig,
+    // Codec::Es521Msig,
+    // Codec::Rs256Msig,
+    Codec::Es256KMsig//,
+    //Codec::LamportMsig,
+];
 
 /// the list of signature share codecs supported
 pub const SIG_SHARE_CODECS: [Codec; 2] = [
-    Codec::Bls12381G1SigShare,
-    Codec::Bls12381G2SigShare];
+    Codec::Bls12381G1ShareMsig,
+    Codec::Bls12381G2ShareMsig//,
+    //Codec::LamportShareMsig,
+];
 
 /// the multisig sigil
 pub const SIGIL: Codec = Codec::Multisig;
@@ -172,53 +180,53 @@ impl Views for Multisig {
     /// Provide a read-only view to access the signature attributes
     fn attr_view<'a>(&'a self) -> Result<Box<dyn AttrView + 'a>, Error> {
         match self.codec {
-            Codec::Bls12381G1Sig
-            | Codec::Bls12381G2Sig
-            | Codec::Bls12381G1SigShare
-            | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
-            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
-            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
+            Codec::Bls12381G1Msig
+            | Codec::Bls12381G2Msig
+            | Codec::Bls12381G1ShareMsig
+            | Codec::Bls12381G2ShareMsig => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::EddsaMsig => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256KMsig => Ok(Box::new(secp256k1::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
     /// Provide a read-only view to access signature data
     fn data_view<'a>(&'a self) -> Result<Box<dyn DataView + 'a>, Error> {
         match self.codec {
-            Codec::Bls12381G1Sig
-            | Codec::Bls12381G2Sig
-            | Codec::Bls12381G1SigShare
-            | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
-            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
-            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
+            Codec::Bls12381G1Msig
+            | Codec::Bls12381G2Msig
+            | Codec::Bls12381G1ShareMsig
+            | Codec::Bls12381G2ShareMsig => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::EddsaMsig => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256KMsig => Ok(Box::new(secp256k1::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
     /// Provide a read-only view to access signature data
     fn conv_view<'a>(&'a self) -> Result<Box<dyn ConvView + 'a>, Error> {
         match self.codec {
-            Codec::Bls12381G1Sig
-            | Codec::Bls12381G2Sig
-            | Codec::Bls12381G1SigShare
-            | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
-            Codec::Eddsa => Ok(Box::new(ed25519::View::try_from(self)?)),
-            Codec::Es256K => Ok(Box::new(secp256k1::View::try_from(self)?)),
+            Codec::Bls12381G1Msig
+            | Codec::Bls12381G2Msig
+            | Codec::Bls12381G1ShareMsig
+            | Codec::Bls12381G2ShareMsig => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::EddsaMsig => Ok(Box::new(ed25519::View::try_from(self)?)),
+            Codec::Es256KMsig => Ok(Box::new(secp256k1::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
     /// Provide a read-only view to access the threshold signature attributes
     fn threshold_attr_view<'a>(&'a self) -> Result<Box<dyn ThresholdAttrView + 'a>, Error> {
         match self.codec {
-            Codec::Bls12381G1Sig
-            | Codec::Bls12381G2Sig
-            | Codec::Bls12381G1SigShare
-            | Codec::Bls12381G2SigShare => Ok(Box::new(bls12381::View::try_from(self)?)),
+            Codec::Bls12381G1Msig
+            | Codec::Bls12381G2Msig
+            | Codec::Bls12381G1ShareMsig
+            | Codec::Bls12381G2ShareMsig => Ok(Box::new(bls12381::View::try_from(self)?)),
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
         }
     }
     /// Provide the view for adding a share to a multisig
     fn threshold_view<'a>(&'a self) -> Result<Box<dyn ThresholdView + 'a>, Error> {
         match self.codec {
-            Codec::Bls12381G1Sig | Codec::Bls12381G2Sig => {
+            Codec::Bls12381G1Msig | Codec::Bls12381G2Msig => {
                 Ok(Box::new(bls12381::View::try_from(self)?))
             }
             _ => Err(AttributesError::UnsupportedCodec(self.codec).into()),
@@ -253,7 +261,7 @@ impl Builder {
             Ed25519 => {
                 attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
                 Ok(Self {
-                    codec: Codec::Eddsa,
+                    codec: Codec::EddsaMsig,
                     attributes: Some(attributes),
                     ..Default::default()
                 })
@@ -262,7 +270,7 @@ impl Builder {
                 secp256k1::ALGORITHM_NAME => {
                     attributes.insert(AttrId::SigData, sig.as_bytes().to_vec());
                     Ok(Self {
-                        codec: Codec::Es256K,
+                        codec: Codec::Es256KMsig,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -272,7 +280,7 @@ impl Builder {
                     attributes.insert(AttrId::Scheme, sig_combined.0.into());
                     attributes.insert(AttrId::SigData, sig_combined.1);
                     Ok(Self {
-                        codec: Codec::Bls12381G1Sig,
+                        codec: Codec::Bls12381G1Msig,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -282,7 +290,7 @@ impl Builder {
                     attributes.insert(AttrId::Scheme, sig_combined.0.into());
                     attributes.insert(AttrId::SigData, sig_combined.1);
                     Ok(Self {
-                        codec: Codec::Bls12381G2Sig,
+                        codec: Codec::Bls12381G2Msig,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -295,7 +303,7 @@ impl Builder {
                     attributes.insert(AttrId::Scheme, sig_share.3.into());
                     attributes.insert(AttrId::SigData, sig_share.4);
                     Ok(Self {
-                        codec: Codec::Bls12381G1SigShare,
+                        codec: Codec::Bls12381G1ShareMsig,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -308,7 +316,7 @@ impl Builder {
                     attributes.insert(AttrId::Scheme, sig_share.3.into());
                     attributes.insert(AttrId::SigData, sig_share.4);
                     Ok(Self {
-                        codec: Codec::Bls12381G1SigShare,
+                        codec: Codec::Bls12381G1ShareMsig,
                         attributes: Some(attributes),
                         ..Default::default()
                     })
@@ -328,8 +336,8 @@ impl Builder {
         let sig_bytes: Vec<u8> = sig.as_raw_value().to_bytes().as_ref().to_vec();
         println!("signature length: {}", sig_bytes.len());
         let codec = match sig_bytes.len() {
-            48 => Codec::Bls12381G1Sig, // G1Projective::to_compressed()
-            96 => Codec::Bls12381G2Sig, // G2Projective::to_compressed()
+            48 => Codec::Bls12381G1Msig, // G1Projective::to_compressed()
+            96 => Codec::Bls12381G2Msig, // G2Projective::to_compressed()
             _ => {
                 return Err(Error::UnsupportedAlgorithm(
                     "invalid Bls signature size".to_string(),
@@ -361,8 +369,8 @@ impl Builder {
         let value = sigshare.value_vec();
         println!("sigshare len: {}", value.len());
         let codec = match value.len() {
-            48 => Codec::Bls12381G1SigShare, // large pubkeys, small signatures
-            96 => Codec::Bls12381G2SigShare, // small pubkeys, large signatures
+            48 => Codec::Bls12381G1ShareMsig, // large pubkeys, small signatures
+            96 => Codec::Bls12381G2ShareMsig, // small pubkeys, large signatures
             _ => {
                 return Err(Error::UnsupportedAlgorithm(
                     "invalid Bls signature size".to_string(),
@@ -507,7 +515,7 @@ mod tests {
 
     #[test]
     fn test_eddsa() {
-        let ms = Builder::new(Codec::Eddsa)
+        let ms = Builder::new(Codec::EddsaMsig)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
@@ -517,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_es256k() {
-        let ms = Builder::new(Codec::Es256K)
+        let ms = Builder::new(Codec::Es256KMsig)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
@@ -578,7 +586,7 @@ mod tests {
         });
 
         // build a new signature from the parts
-        let mut builder = Builder::new(Codec::Bls12381G2Sig);
+        let mut builder = Builder::new(Codec::Bls12381G2Msig);
         for sig in &sigs {
             builder = builder.add_signature_share(sig);
         }
@@ -596,7 +604,7 @@ mod tests {
 
     #[test]
     fn test_eddsa_ssh_roundtrip() {
-        let ms1 = Builder::new(Codec::Eddsa)
+        let ms1 = Builder::new(Codec::EddsaMsig)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
@@ -611,7 +619,7 @@ mod tests {
 
     #[test]
     fn test_es256k_ssh_roundtrip() {
-        let ms1 = Builder::new(Codec::Es256K)
+        let ms1 = Builder::new(Codec::Es256KMsig)
             .with_signature_bytes(&[0u8; 64])
             .try_build()
             .unwrap();
@@ -686,7 +694,7 @@ mod tests {
         });
 
         // build a new signature from the parts
-        let mut builder = Builder::new(Codec::Bls12381G2Sig);
+        let mut builder = Builder::new(Codec::Bls12381G2Msig);
         for sig in &sigs {
             let ms = Builder::new_from_ssh_signature(sig)
                 .unwrap()

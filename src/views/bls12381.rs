@@ -379,7 +379,7 @@ impl<'a> ConvView for View<'a> {
         let scheme_type = SchemeTypeId::try_from(av.scheme()?)?;
 
         match self.ms.codec {
-            Codec::Bls12381G1Sig => {
+            Codec::Bls12381G1Msig => {
                 // create the combined sig tuple
                 let sig_data: Vec<u8> = SigCombined(scheme_type, sig_bytes).into();
 
@@ -392,7 +392,7 @@ impl<'a> ConvView for View<'a> {
                 )
                 .map_err(|e| ConversionsError::SshSig(e))?)
             }
-            Codec::Bls12381G2Sig => {
+            Codec::Bls12381G2Msig => {
                 // create the combined sig tuple
                 let sig_data: Vec<u8> = SigCombined(scheme_type, sig_bytes).into();
 
@@ -405,7 +405,7 @@ impl<'a> ConvView for View<'a> {
                 )
                 .map_err(|e| ConversionsError::SshSig(e))?)
             }
-            Codec::Bls12381G1SigShare => {
+            Codec::Bls12381G1ShareMsig => {
                 // get the threshold attributes
                 let av = self.ms.threshold_attr_view()?;
                 let threshold = av.threshold()?;
@@ -425,7 +425,7 @@ impl<'a> ConvView for View<'a> {
                 )
                 .map_err(|e| ConversionsError::SshSig(e))?)
             }
-            Codec::Bls12381G2SigShare => {
+            Codec::Bls12381G2ShareMsig => {
                 // get the threshold attributes
                 let av = self.ms.threshold_attr_view()?;
                 let threshold = av.threshold()?;
@@ -472,7 +472,7 @@ impl<'a> ThresholdAttrView for View<'a> {
     /// get the share identifier
     fn identifier(&self) -> Result<u8, Error> {
         match self.ms.codec {
-            Codec::Bls12381G1SigShare | Codec::Bls12381G2SigShare => {
+            Codec::Bls12381G1ShareMsig | Codec::Bls12381G2ShareMsig => {
                 let identifier = self
                     .ms
                     .attributes
@@ -500,9 +500,9 @@ impl<'a> ThresholdView for View<'a> {
     fn shares(&self) -> Result<Vec<Multisig>, Error> {
         // get the codec for the new share multisigs
         let codec = match self.ms.codec {
-            Codec::Bls12381G1Sig => Codec::Bls12381G1SigShare,
-            Codec::Bls12381G2Sig => Codec::Bls12381G2SigShare,
-            Codec::Bls12381G1SigShare | Codec::Bls12381G2SigShare => {
+            Codec::Bls12381G1Msig => Codec::Bls12381G1ShareMsig,
+            Codec::Bls12381G2Msig => Codec::Bls12381G2ShareMsig,
+            Codec::Bls12381G1ShareMsig | Codec::Bls12381G2ShareMsig => {
                 return Err(SharesError::IsASignatureShare.into())
             }
             _ => return Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
@@ -551,8 +551,8 @@ impl<'a> ThresholdView for View<'a> {
     fn add_share(&self, share: &Multisig) -> Result<Multisig, Error> {
         // check the codec is correct for this function
         match self.ms.codec {
-            Codec::Bls12381G1Sig | Codec::Bls12381G2Sig => {}
-            Codec::Bls12381G1SigShare | Codec::Bls12381G2SigShare => {
+            Codec::Bls12381G1Msig | Codec::Bls12381G2Msig => {}
+            Codec::Bls12381G1ShareMsig | Codec::Bls12381G2ShareMsig => {
                 return Err(SharesError::IsASignatureShare.into())
             }
             _ => return Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
@@ -653,7 +653,7 @@ impl<'a> ThresholdView for View<'a> {
         }
 
         match self.ms.codec {
-            Codec::Bls12381G1Sig => {
+            Codec::Bls12381G1Msig => {
                 let mut share_type_id: Option<SchemeTypeId> = None;
                 let mut shares = Vec::default();
                 threshold_data
@@ -693,7 +693,7 @@ impl<'a> ThresholdView for View<'a> {
                     .with_payload_encoding(encoding)
                     .try_build()
             }
-            Codec::Bls12381G2Sig => {
+            Codec::Bls12381G2Msig => {
                 let mut share_type_id: Option<SchemeTypeId> = None;
                 let mut shares = Vec::default();
                 threshold_data
