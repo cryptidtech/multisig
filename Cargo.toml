@@ -1,6 +1,6 @@
 [package]
 name = "multisig"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 authors = ["Dave Grantham <dwg@linuxprogrammer.org>"]
 description = "Multisig self-describing multicodec implementation for digital signatures"
@@ -14,7 +14,7 @@ default = ["serde"]
 [dependencies]
 blsful = { version = "2.5", git = "https://github.com/mikelodder7/blsful.git" }
 elliptic-curve = "0.13"
-multibase = "0.9"
+multibase = { version = "1.0", git = "https://github.com/cryptidtech/rust-multibase.git" }
 multicodec = { version = "1.0", git = "https://github.com/cryptidtech/rust-multicodec.git" }
 multitrait = { version = "1.0", git = "https://github.com/cryptidtech/multitrait.git" }
 multiutil = { version = "1.0", git = "https://github.com/cryptidtech/multiutil.git" }
