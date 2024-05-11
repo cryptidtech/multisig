@@ -299,11 +299,10 @@ mod tests {
         assert_eq!(ms1, ms2);
     }
 
-    /*
     #[test]
     fn test_bls12381g1_share_serde_compact() {
         let ms = EncodedMultisig::try_from(
-            "z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh",
+            "h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye",
         )
         .unwrap()
         .to_inner();
@@ -323,48 +322,39 @@ mod tests {
             &ms.compact(),
             &[
                 Token::BorrowedBytes(&[
-                    0x39,
-                    0xfa, 0xa1, 0x03,
-                    0x00,
-                    0x05,
-                    0x00, 0x30,
-                    0x84, 0x25, 0x59, 0x55, 0xae, 0x37, 0x13, 0xfd,
-                    0xc3, 0x6c, 0xa6, 0x11, 0xe1, 0x1f, 0xbd, 0xcf,
-                    0xf0, 0x0a, 0xc3, 0xac, 0x49, 0x64, 0xa4, 0x2b,
-                    0x82, 0x53, 0x20, 0x68, 0x64, 0x64, 0x08, 0xdd,
-                    0xb7, 0xd9, 0xd5, 0x64, 0x65, 0x96, 0x4b, 0x37,
-                    0xde, 0x1b, 0xfb, 0x9e, 0x0a, 0xa9, 0xd8, 0x84,
-                    0x02, 0x01, 0x03,
-                    0x03, 0x01, 0x04,
-                    0x04, 0x01, 0x01,
-                    0x05, 0x01, 0x02
+                    0x39, 0x84, 0xa6, 0xc0, 0x06, 0x00, 0x05, 0x00,
+                    0x30, 0xb7, 0x85, 0xb6, 0x78, 0x1a, 0x96, 0xd3,
+                    0x53, 0xcc, 0xe3, 0x5a, 0xfd, 0x75, 0xf4, 0x97,
+                    0x89, 0x60, 0x8c, 0x58, 0xbd, 0xc1, 0x35, 0x39,
+                    0xa0, 0x4c, 0xe8, 0xc2, 0x87, 0xef, 0x0d, 0x1e,
+                    0x02, 0xa9, 0x11, 0x76, 0x1d, 0x6c, 0x59, 0x04,
+                    0x93, 0x10, 0x47, 0x5e, 0x66, 0x6d, 0xf3, 0x0f,
+                    0x6a, 0x02, 0x01, 0x02, 0x03, 0x01, 0x03, 0x04,
+                    0x01, 0x04, 0x05, 0x01, 0x01,
                 ])
             ],
         )
     }
-    */
 
-    /*
     #[test]
     fn test_bls12381g1_share_serde_encoded_string() {
         let ms = EncodedMultisig::try_from(
-            "z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh",
+            "h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye",
         )
         .unwrap();
 
         assert_tokens(
             &ms.readable(),
-            &[Token::BorrowedStr("z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh")
+            &[
+                Token::BorrowedStr("h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye")
             ],
         )
     }
-    */
 
-    /*
     #[test]
     fn test_bls12381g1_share_serde_readable() {
         let ms = EncodedMultisig::try_from(
-            "z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh",
+            "h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye",
         )
         .unwrap()
         .to_inner();
@@ -374,43 +364,41 @@ mod tests {
             &[
                 Token::Struct { name: "multisig", len: 3, },
                 Token::BorrowedStr("codec"),
-                Token::BorrowedStr("bls12_381-g1-sig-share"),
+                Token::BorrowedStr("bls12_381-g1-share-msig"),
                 Token::BorrowedStr("message"),
                 Token::BorrowedStr("f00"),
                 Token::BorrowedStr("attributes"),
                 Token::Seq { len: Some(5) },
                 Token::Tuple { len: 2 },
                 Token::BorrowedStr("sig-data"),
-                Token::BorrowedStr("f3084255955ae3713fdc36ca611e11fbdcff00ac3ac4964a42b82532068646408ddb7d9d56465964b37de1bfb9e0aa9d884"),
+                Token::BorrowedStr("f30b785b6781a96d353cce35afd75f49789608c58bdc13539a04ce8c287ef0d1e02a911761d6c59049310475e666df30f6a"),
                 Token::TupleEnd,
                 Token::Tuple { len: 2 },
                 Token::BorrowedStr("scheme"),
-                Token::BorrowedStr("f0103"),
+                Token::BorrowedStr("f0102"),
                 Token::TupleEnd,
                 Token::Tuple { len: 2 },
                 Token::BorrowedStr("threshold"),
-                Token::BorrowedStr("f0104"),
+                Token::BorrowedStr("f0103"),
                 Token::TupleEnd,
                 Token::Tuple { len: 2 },
                 Token::BorrowedStr("limit"),
-                Token::BorrowedStr("f0101"),
+                Token::BorrowedStr("f0104"),
                 Token::TupleEnd,
                 Token::Tuple { len: 2 },
                 Token::BorrowedStr("share-identifier"),
-                Token::BorrowedStr("f0102"),
+                Token::BorrowedStr("f0101"),
                 Token::TupleEnd,
                 Token::SeqEnd,
                 Token::StructEnd,
             ],
         )
     }
-    */
 
-    /*
     #[test]
     fn test_bls12381g1_share_serde_json() {
         let ms1 = EncodedMultisig::try_from(
-            "z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh",
+            "h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye",
         )
         .unwrap()
         .to_inner();
@@ -419,13 +407,11 @@ mod tests {
         let ms2: Multisig = serde_json::from_str(&s).unwrap();
         assert_eq!(ms1, ms2);
     }
-    */
 
-    /*
     #[test]
     fn test_bls12381g1_share_serde_cbor() {
         let ms1 = EncodedMultisig::try_from(
-            "z8awyKZo9vU5uFqUTjLALGKyovR2Y2mhqMkLAaoDPwvJrrwKm8gifezRxASzu1SBEUCEZW3zixZykGevVSkQZSZrSwtrkh",
+            "h8gnkpoygyynoycfzos58ogws4pjh3a449i49jfhjcngftxqbgwh4yu8eakd66de6ykwtn7o7ptcojraoe7xgc5xub7iyryenycyogbybyononye",
         )
         .unwrap()
         .to_inner();
@@ -434,7 +420,6 @@ mod tests {
         let ms2: Multisig = serde_cbor::from_slice(v.as_slice()).unwrap();
         assert_eq!(ms1, ms2);
     }
-    */
 
     #[test]
     fn test_null_multisig_serde_compact() {
