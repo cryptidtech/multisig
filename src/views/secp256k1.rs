@@ -53,6 +53,7 @@ impl<'a> DataView for View<'a> {
 
 impl<'a> ConvView for View<'a> {
     /// convert to SSH signature format
+    #[cfg(feature = "ssh")]
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
         let dv = self.ms.data_view()?;

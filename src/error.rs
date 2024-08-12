@@ -126,9 +126,11 @@ pub enum SharesError {
 #[non_exhaustive]
 pub enum ConversionsError {
     /// Ssh signature conversion error
+    #[cfg(feature = "ssh")]
     #[error(transparent)]
     SshSig(#[from] ssh_key::Error),
     /// Ssh label error
+    #[cfg(feature = "ssh")]
     #[error(transparent)]
     SshSigLabel(#[from] ssh_encoding::LabelError),
 }
