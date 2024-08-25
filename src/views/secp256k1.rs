@@ -6,7 +6,7 @@ use crate::{
 use multicodec::Codec;
 
 /// the name used to identify these signatures in non-Multikey formats
-pub const ALGORITHM_NAME: &'static str = "secp256k1@multisig";
+pub const ALGORITHM_NAME: &str = "secp256k1@multisig";
 
 pub(crate) struct View<'a> {
     ms: &'a Multisig,
@@ -53,7 +53,6 @@ impl<'a> DataView for View<'a> {
 
 impl<'a> ConvView for View<'a> {
     /// convert to SSH signature format
-    #[cfg(feature = "ssh")]
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
         let dv = self.ms.data_view()?;
@@ -61,10 +60,10 @@ impl<'a> ConvView for View<'a> {
         Ok(ssh_key::Signature::new(
             ssh_key::Algorithm::Other(
                 ssh_key::AlgorithmName::new(ALGORITHM_NAME)
-                    .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                    .map_err(|e| ConversionsError::Ssh(e.into()))?,
             ),
             sig_bytes,
         )
-        .map_err(|e| ConversionsError::SshSig(e))?)
+        .map_err(|e| ConversionsError::Ssh(e.into()))?)
     }
 }

@@ -254,7 +254,6 @@ impl Builder {
     }
 
     /// create new multisig from ssh Signature
-    #[cfg(feature = "ssh")]
     pub fn new_from_ssh_signature(sig: &ssh_key::Signature) -> Result<Self, Error> {
         let mut attributes = BTreeMap::new();
         use ssh_key::Algorithm::*;
@@ -603,7 +602,6 @@ mod tests {
         assert_eq!(ms1, ms3);
     }
 
-    #[cfg(feature = "ssh")]
     #[test]
     fn test_eddsa_ssh_roundtrip() {
         let ms1 = Builder::new(Codec::EddsaMsig)
@@ -619,7 +617,6 @@ mod tests {
         assert_eq!(ms1, ms2);
     }
 
-    #[cfg(feature = "ssh")]
     #[test]
     fn test_es256k_ssh_roundtrip() {
         let ms1 = Builder::new(Codec::Es256KMsig)
@@ -635,7 +632,6 @@ mod tests {
         assert_eq!(ms1, ms2);
     }
 
-    #[cfg(feature = "ssh")]
     #[test]
     fn test_bls_signature_ssh_roundtrip() {
         let sk = blsful::Bls12381G1::new_secret_key();
@@ -662,7 +658,6 @@ mod tests {
         assert_eq!(ms1, ms2);
     }
 
-    #[cfg(feature = "ssh")]
     #[test]
     fn test_bls_signature_combine_ssh_roundtrip() {
         let sk = blsful::Bls12381G2::new_secret_key();

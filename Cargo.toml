@@ -10,7 +10,6 @@ license = "Apache-2.0"
 
 [features]
 default = ["serde"]
-ssh = ["ssh-key", "ssh-encoding"]
 
 [dependencies]
 blsful = { version = "2.5", git = "https://github.com/mikelodder7/blsful.git" }
@@ -23,12 +22,19 @@ serde = { version = "1.0", default-features = false, features = [
   "alloc",
   "derive",
 ], optional = true }
+ssh-encoding = { version = "0.2" }
 thiserror = "1.0"
 unsigned-varint = { version = "0.8", features = ["std"] }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+ssh-key = { version = "0.6", default-features = false, features = [
+  "alloc",
+  "ecdsa",
+  "ed25519",
+] }
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-ssh-key = { version = "0.6", features = ["crypto"], optional = true }
-ssh-encoding = { version = "0.2", optional = true }
+ssh-key = { version = "0.6", features = ["crypto"] }
 
 [dev-dependencies]
 hex = "0.4"

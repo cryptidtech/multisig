@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 // SPDX-License-Idnetifier: Apache-2.0
 /// Errors created by this library
 #[derive(Clone, Debug, thiserror::Error)]
@@ -125,12 +127,39 @@ pub enum SharesError {
 #[derive(Clone, Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum ConversionsError {
-    /// Ssh signature conversion error
-    #[cfg(feature = "ssh")]
+    /// Ssh conversion error
     #[error(transparent)]
-    SshSig(#[from] ssh_key::Error),
-    /// Ssh label error
-    #[cfg(feature = "ssh")]
-    #[error(transparent)]
-    SshSigLabel(#[from] ssh_encoding::LabelError),
+    Ssh(#[from] SshError),
+}
+
+/// SSH Errors
+#[derive(Clone, Debug)]
+pub enum SshError {
+    /// SSH Sig
+    Sig(ssh_key::Error),
+    /// SSH Sig label
+    SigLabel(ssh_encoding::LabelError),
+}
+
+impl Display for SshError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SshError::Sig(e) => write!(f, "SSH Sig error: {}", e),
+            SshError::SigLabel(e) => write!(f, "SSH Sig label error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for SshError {}
+
+impl From<ssh_key::Error> for SshError {
+    fn from(e: ssh_key::Error) -> Self {
+        SshError::Sig(e)
+    }
+}
+
+impl From<ssh_encoding::LabelError> for SshError {
+    fn from(e: ssh_encoding::LabelError) -> Self {
+        SshError::SigLabel(e)
+    }
 }

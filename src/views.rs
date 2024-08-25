@@ -31,7 +31,6 @@ pub trait DataView {
 /// trait for converting Multisigs to other formats
 pub trait ConvView {
     /// convert the Multisig to an SSH signature
-    #[cfg(feature = "ssh")]
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error>;
 }
 

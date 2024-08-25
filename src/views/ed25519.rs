@@ -50,14 +50,13 @@ impl<'a> DataView for View<'a> {
 
 impl<'a> ConvView for View<'a> {
     /// convert to SSH signature format
-    #[cfg(feature = "ssh")]
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
         let dv = self.ms.data_view()?;
         let sig_bytes = dv.sig_bytes()?;
         Ok(
             ssh_key::Signature::new(ssh_key::Algorithm::Ed25519, sig_bytes)
-                .map_err(|e| ConversionsError::SshSig(e))?,
+                .map_err(|e| ConversionsError::Ssh(e.into()))?,
         )
     }
 }
