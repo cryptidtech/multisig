@@ -23,15 +23,15 @@ pub const SIG_CODECS: [Codec; 4] = [
     // Codec::Es384Msig,
     // Codec::Es521Msig,
     // Codec::Rs256Msig,
-    Codec::Es256KMsig//,
-    //Codec::LamportMsig,
+    Codec::Es256KMsig, //,
+                       //Codec::LamportMsig,
 ];
 
 /// the list of signature share codecs supported
 pub const SIG_SHARE_CODECS: [Codec; 2] = [
     Codec::Bls12381G1ShareMsig,
-    Codec::Bls12381G2ShareMsig//,
-    //Codec::LamportShareMsig,
+    Codec::Bls12381G2ShareMsig, //,
+                                //Codec::LamportShareMsig,
 ];
 
 /// the multisig sigil

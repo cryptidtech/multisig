@@ -56,7 +56,7 @@ impl<'a> ConvView for View<'a> {
         let sig_bytes = dv.sig_bytes()?;
         Ok(
             ssh_key::Signature::new(ssh_key::Algorithm::Ed25519, sig_bytes)
-                .map_err(|e| ConversionsError::SshSig(e))?,
+                .map_err(|e| ConversionsError::Ssh(e.into()))?,
         )
     }
 }

@@ -386,11 +386,11 @@ impl<'a> ConvView for View<'a> {
                 Ok(ssh_key::Signature::new(
                     ssh_key::Algorithm::Other(
                         ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1)
-                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                            .map_err(|e| ConversionsError::Ssh(e.into()))?,
                     ),
                     sig_data,
                 )
-                .map_err(|e| ConversionsError::SshSig(e))?)
+                .map_err(|e| ConversionsError::Ssh(e.into()))?)
             }
             Codec::Bls12381G2Msig => {
                 // create the combined sig tuple
@@ -399,11 +399,11 @@ impl<'a> ConvView for View<'a> {
                 Ok(ssh_key::Signature::new(
                     ssh_key::Algorithm::Other(
                         ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2)
-                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                            .map_err(|e| ConversionsError::Ssh(e.into()))?,
                     ),
                     sig_data,
                 )
-                .map_err(|e| ConversionsError::SshSig(e))?)
+                .map_err(|e| ConversionsError::Ssh(e.into()))?)
             }
             Codec::Bls12381G1ShareMsig => {
                 // get the threshold attributes
@@ -419,11 +419,11 @@ impl<'a> ConvView for View<'a> {
                 Ok(ssh_key::Signature::new(
                     ssh_key::Algorithm::Other(
                         ssh_key::AlgorithmName::new(ALGORITHM_NAME_G1_SHARE)
-                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                            .map_err(|e| ConversionsError::Ssh(e.into()))?,
                     ),
                     sig_data,
                 )
-                .map_err(|e| ConversionsError::SshSig(e))?)
+                .map_err(|e| ConversionsError::Ssh(e.into()))?)
             }
             Codec::Bls12381G2ShareMsig => {
                 // get the threshold attributes
@@ -439,11 +439,11 @@ impl<'a> ConvView for View<'a> {
                 Ok(ssh_key::Signature::new(
                     ssh_key::Algorithm::Other(
                         ssh_key::AlgorithmName::new(ALGORITHM_NAME_G2_SHARE)
-                            .map_err(|e| ConversionsError::SshSigLabel(e))?,
+                            .map_err(|e| ConversionsError::Ssh(e.into()))?,
                     ),
                     sig_data,
                 )
-                .map_err(|e| ConversionsError::SshSig(e))?)
+                .map_err(|e| ConversionsError::Ssh(e.into()))?)
             }
             _ => Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
         }

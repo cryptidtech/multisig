@@ -18,11 +18,23 @@ multibase = { version = "1.0", git = "https://github.com/cryptidtech/rust-multib
 multicodec = { version = "1.0", git = "https://github.com/cryptidtech/rust-multicodec.git" }
 multitrait = { version = "1.0", git = "https://github.com/cryptidtech/multitrait.git" }
 multiutil = { version = "1.0", git = "https://github.com/cryptidtech/multiutil.git" }
-serde = { version = "1.0", default-features = false, features = ["alloc", "derive"], optional = true }
-ssh-key = { version = "0.6", features = ["crypto"] }
-ssh-encoding = "0.2"
+serde = { version = "1.0", default-features = false, features = [
+  "alloc",
+  "derive",
+], optional = true }
+ssh-encoding = { version = "0.2" }
 thiserror = "1.0"
 unsigned-varint = { version = "0.8", features = ["std"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+ssh-key = { version = "0.6", default-features = false, features = [
+  "alloc",
+  "ecdsa",
+  "ed25519",
+] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+ssh-key = { version = "0.6", features = ["crypto"] }
 
 [dev-dependencies]
 hex = "0.4"
