@@ -77,19 +77,19 @@ impl EncodingInfo for Multisig {
     }
 }
 
-impl Into<Vec<u8>> for Multisig {
-    fn into(self) -> Vec<u8> {
+impl From<Multisig> for Vec<u8> {
+    fn from(val: Multisig) -> Self {
         let mut v = Vec::default();
         // add in the sigil
         v.append(&mut SIGIL.into());
         // add in the signature codec
-        v.append(&mut self.codec.into());
+        v.append(&mut val.codec.into());
         // add in the message
-        v.append(&mut Varbytes(self.message.clone()).into());
+        v.append(&mut Varbytes(val.message.clone()).into());
         // add in the number of attributes
-        v.append(&mut Varuint(self.attributes.len()).into());
+        v.append(&mut Varuint(val.attributes.len()).into());
         // add in the attributes
-        self.attributes.iter().for_each(|(id, attr)| {
+        val.attributes.iter().for_each(|(id, attr)| {
             v.append(&mut (*id).into());
             v.append(&mut Varbytes(attr.clone()).into());
         });
@@ -167,7 +167,7 @@ impl fmt::Debug for Multisig {
             "{:?} - {:?} - {}",
             SIGIL,
             self.codec(),
-            if self.message.len() > 0 {
+            if !self.message.is_empty() {
                 "Combined"
             } else {
                 "Detached"
@@ -405,7 +405,7 @@ impl Builder {
 
     fn with_attribute(mut self, attr: AttrId, data: &Vec<u8>) -> Self {
         let mut attributes = self.attributes.unwrap_or_default();
-        attributes.insert(attr, data.clone());
+        attributes.insert(attr, data.to_owned());
         self.attributes = Some(attributes);
         self
     }
@@ -457,7 +457,7 @@ impl Builder {
     pub fn try_build_encoded(self) -> Result<EncodedMultisig, Error> {
         Ok(BaseEncoded::new(
             self.base_encoding
-                .unwrap_or_else(|| Multisig::preferred_encoding()),
+                .unwrap_or_else(Multisig::preferred_encoding),
             self.try_build()?,
         ))
     }

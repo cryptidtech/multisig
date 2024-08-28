@@ -37,7 +37,7 @@ pub enum SchemeTypeId {
 impl SchemeTypeId {
     /// Get the code for the attribute id
     pub fn code(&self) -> u8 {
-        self.clone().into()
+        (*self).into()
     }
 
     /// Convert the attribute id to &str
@@ -50,9 +50,9 @@ impl SchemeTypeId {
     }
 }
 
-impl Into<u8> for SchemeTypeId {
-    fn into(self) -> u8 {
-        self as u8
+impl From<SchemeTypeId> for u8 {
+    fn from(val: SchemeTypeId) -> Self {
+        val as u8
     }
 }
 
@@ -69,9 +69,9 @@ impl TryFrom<u8> for SchemeTypeId {
     }
 }
 
-impl Into<SignatureSchemes> for SchemeTypeId {
-    fn into(self) -> SignatureSchemes {
-        match self {
+impl From<SchemeTypeId> for SignatureSchemes {
+    fn from(val: SchemeTypeId) -> Self {
+        match val {
             SchemeTypeId::Basic => SignatureSchemes::Basic,
             SchemeTypeId::MessageAugmentation => SignatureSchemes::MessageAugmentation,
             SchemeTypeId::ProofOfPossession => SignatureSchemes::ProofOfPossession,
@@ -115,9 +115,9 @@ where
     }
 }
 
-impl Into<Vec<u8>> for SchemeTypeId {
-    fn into(self) -> Vec<u8> {
-        self.code().encode_into()
+impl From<SchemeTypeId> for Vec<u8> {
+    fn from(val: SchemeTypeId) -> Self {
+        val.code().encode_into()
     }
 }
 
@@ -167,13 +167,13 @@ pub struct SigCombined(
     pub Vec<u8>,
 );
 
-impl Into<Vec<u8>> for SigCombined {
-    fn into(self) -> Vec<u8> {
+impl From<SigCombined> for Vec<u8> {
+    fn from(val: SigCombined) -> Self {
         let mut v = Vec::default();
         // add in the signature type id
-        v.append(&mut self.0.into());
+        v.append(&mut val.0.into());
         // add in the signature bytes
-        v.append(&mut Varbytes(self.1.clone()).into());
+        v.append(&mut Varbytes(val.1.clone()).into());
         v
     }
 }
@@ -214,19 +214,19 @@ pub struct SigShare(
     pub Vec<u8>,
 );
 
-impl Into<Vec<u8>> for SigShare {
-    fn into(self) -> Vec<u8> {
+impl From<SigShare> for Vec<u8> {
+    fn from(val: SigShare) -> Self {
         let mut v = Vec::default();
         // add in the share identifier
-        v.append(&mut Varuint(self.0).into());
+        v.append(&mut Varuint(val.0).into());
         // add in the share threshold
-        v.append(&mut Varuint(self.1).into());
+        v.append(&mut Varuint(val.1).into());
         // add in the share limit
-        v.append(&mut Varuint(self.2).into());
+        v.append(&mut Varuint(val.2).into());
         // add in the share type id
-        v.append(&mut self.3.into());
+        v.append(&mut val.3.into());
         // add in the share data
-        v.append(&mut Varbytes(self.4.clone()).into());
+        v.append(&mut Varbytes(val.4.clone()).into());
         v
     }
 }
@@ -270,13 +270,13 @@ impl<'a> TryDecodeFrom<'a> for SigShare {
 #[derive(Clone, Default)]
 pub(crate) struct ThresholdData(pub(crate) BTreeMap<u8, SigShare>);
 
-impl Into<Vec<u8>> for ThresholdData {
-    fn into(self) -> Vec<u8> {
+impl From<ThresholdData> for Vec<u8> {
+    fn from(val: ThresholdData) -> Self {
         let mut v = Vec::default();
         // add in the number of sig shares
-        v.append(&mut Varuint(self.0.len()).into());
+        v.append(&mut Varuint(val.0.len()).into());
         // add in the sig shares
-        self.0.iter().for_each(|(_, share)| {
+        val.0.iter().for_each(|(_, share)| {
             v.append(&mut share.clone().into());
         });
         v
@@ -607,11 +607,7 @@ impl<'a> ThresholdView for View<'a> {
             match av.payload_encoding() {
                 Ok(encoding) => Some(encoding),
                 Err(_) => {
-                    if let Some(encoding) = encoding {
-                        Some(encoding)
-                    } else {
-                        None
-                    }
+                    encoding
                 }
             }
         };
@@ -737,7 +733,7 @@ impl<'a> ThresholdView for View<'a> {
                     builder.try_build()
                 }
             }
-            _ => return Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
+            _ => Err(Error::UnsupportedAlgorithm(self.ms.codec.to_string())),
         }
     }
 }
