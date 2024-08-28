@@ -13,13 +13,13 @@ use multiutil::{Varbytes, Varuint};
 use std::{collections::BTreeMap, fmt};
 
 /// the name used to identify these signatures in non-Multikey formats
-pub const ALGORITHM_NAME_G1: &'static str = "bls12_381-g1@multisig";
+pub const ALGORITHM_NAME_G1: &str = "bls12_381-g1@multisig";
 /// the name used to identify these signatures in non-Multikey formats
-pub const ALGORITHM_NAME_G1_SHARE: &'static str = "bls12_381-g1-share@multisig";
+pub const ALGORITHM_NAME_G1_SHARE: &str = "bls12_381-g1-share@multisig";
 /// the name used to identify these signatures in non-Multikey formats
-pub const ALGORITHM_NAME_G2: &'static str = "bls12_381-g2@multisig";
+pub const ALGORITHM_NAME_G2: &str = "bls12_381-g2@multisig";
 /// the name used to identify these signatures in non-Multikey formats
-pub const ALGORITHM_NAME_G2_SHARE: &'static str = "bls12_381-g2-share@multisig";
+pub const ALGORITHM_NAME_G2_SHARE: &str = "bls12_381-g2-share@multisig";
 
 /// The different signature scheme methods offered in the blsful BLS crate
 #[repr(u8)]
