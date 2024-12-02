@@ -12,7 +12,7 @@ license = "Apache-2.0"
 default = ["serde"]
 
 [dependencies]
-blsful = { version = "2.5", git = "https://github.com/mikelodder7/blsful.git" }
+blsful = { version = "2.5" }
 elliptic-curve = "0.13"
 multibase = { version = "1.0", git = "https://github.com/cryptidtech/rust-multibase.git" }
 multicodec = { version = "1.0", git = "https://github.com/cryptidtech/rust-multicodec.git" }
