@@ -9,11 +9,6 @@ pub mod ed25519;
 /// Koblitz 256k1 curve implmentation (a.k.a. the Bitcoin curve)
 pub mod secp256k1;
 
-///
-/// Attributes views let you inquire about the Multisig and retrieve data
-/// associated with the particular view.
-///
-
 /// trait for returning the attributes of the Multisig
 pub trait AttrView {
     /// get the codec that the signed message was encoded with
