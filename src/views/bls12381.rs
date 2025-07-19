@@ -329,7 +329,7 @@ impl<'a> TryFrom<&'a Multisig> for View<'a> {
     }
 }
 
-impl<'a> AttrView for View<'a> {
+impl AttrView for View<'_> {
     /// for Bls Multisigs, the payload encoding is stored using the
     /// SchemeTypeId::PayloadEncoding attribute id.
     fn payload_encoding(&self) -> Result<Codec, Error> {
@@ -354,7 +354,7 @@ impl<'a> AttrView for View<'a> {
     }
 }
 
-impl<'a> DataView for View<'a> {
+impl DataView for View<'_> {
     /// For Bls Multisig values, the sig data is stored using the
     /// SchemeTypeId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
@@ -367,7 +367,7 @@ impl<'a> DataView for View<'a> {
     }
 }
 
-impl<'a> ConvView for View<'a> {
+impl ConvView for View<'_> {
     /// convert to SSH signature format
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
@@ -450,7 +450,7 @@ impl<'a> ConvView for View<'a> {
     }
 }
 
-impl<'a> ThresholdAttrView for View<'a> {
+impl ThresholdAttrView for View<'_> {
     /// get the threshold value for this multisig
     fn threshold(&self) -> Result<usize, Error> {
         let threshold = self
@@ -495,7 +495,7 @@ impl<'a> ThresholdAttrView for View<'a> {
 }
 
 /// trait for accumulating shares to rebuild a threshold signature
-impl<'a> ThresholdView for View<'a> {
+impl ThresholdView for View<'_> {
     /// get the signature shares
     fn shares(&self) -> Result<Vec<Multisig>, Error> {
         // get the codec for the new share multisigs
@@ -606,9 +606,7 @@ impl<'a> ThresholdView for View<'a> {
             // the value from the first share added
             match av.payload_encoding() {
                 Ok(encoding) => Some(encoding),
-                Err(_) => {
-                    encoding
-                }
+                Err(_) => encoding,
             }
         };
 

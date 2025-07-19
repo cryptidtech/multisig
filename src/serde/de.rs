@@ -30,28 +30,28 @@ impl<'de> Deserialize<'de> for AttrId {
             where
                 E: Error,
             {
-                AttrId::try_from(c).map_err(|e| Error::custom(e.to_string()))
+                AttrId::try_from(c).map_err(E::custom)
             }
 
             fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
             where
                 E: Error,
             {
-                AttrId::try_from(s).map_err(|e| Error::custom(e.to_string()))
+                AttrId::try_from(s).map_err(E::custom)
             }
 
             fn visit_borrowed_str<E>(self, s: &'de str) -> Result<Self::Value, E>
             where
                 E: Error,
             {
-                AttrId::try_from(s).map_err(|e| Error::custom(e.to_string()))
+                AttrId::try_from(s).map_err(E::custom)
             }
 
             fn visit_string<E>(self, s: String) -> Result<Self::Value, E>
             where
                 E: Error,
             {
-                AttrId::try_from(s.as_str()).map_err(|e| Error::custom(e.to_string()))
+                AttrId::try_from(s.as_str()).map_err(E::custom)
             }
         }
 
@@ -144,7 +144,7 @@ impl<'de> Deserialize<'de> for Multisig {
             deserializer.deserialize_struct(ms::SIGIL.as_str(), FIELDS, MultisigVisitor)
         } else {
             let b: &'de [u8] = Deserialize::deserialize(deserializer)?;
-            Ok(Self::try_from(b).map_err(|e| Error::custom(e.to_string()))?)
+            Ok(Self::try_from(b).map_err(D::Error::custom)?)
         }
     }
 }

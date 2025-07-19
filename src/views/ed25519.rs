@@ -17,7 +17,7 @@ impl<'a> TryFrom<&'a Multisig> for View<'a> {
     }
 }
 
-impl<'a> AttrView for View<'a> {
+impl AttrView for View<'_> {
     /// for EdDSA Multisigs, the payload encoding is stored using the
     /// AttrId::PayloadEncoding attribute id.
     fn payload_encoding(&self) -> Result<Codec, Error> {
@@ -35,7 +35,7 @@ impl<'a> AttrView for View<'a> {
     }
 }
 
-impl<'a> DataView for View<'a> {
+impl DataView for View<'_> {
     /// For EdDSA Multisig values, the sig data is stored using the
     /// AttrId::SigData attribute id.
     fn sig_bytes(&self) -> Result<Vec<u8>, Error> {
@@ -48,7 +48,7 @@ impl<'a> DataView for View<'a> {
     }
 }
 
-impl<'a> ConvView for View<'a> {
+impl ConvView for View<'_> {
     /// convert to SSH signature format
     fn to_ssh_signature(&self) -> Result<ssh_key::Signature, Error> {
         // get the signature data
